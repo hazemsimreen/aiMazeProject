@@ -130,13 +130,13 @@ public class TieController {
             HBox controlButtons = new HBox(20); // 20px spacing between buttons
             controlButtons.setPadding(new Insets(10));
             controlButtons.setAlignment(Pos.CENTER);
-            
+
             Button randomizeButton = new Button("Randomize Tiles");
             randomizeButton.setOnAction(this::randomizeTiles);
-            
+
             Button runSearchButton = new Button("Run Search");
             runSearchButton.setOnAction(this::runSearch);
-            
+
             controlButtons.getChildren().addAll(randomizeButton, runSearchButton);
 
             // Add all components to the main pane
@@ -158,58 +158,58 @@ public class TieController {
         }
     }
 
-@FXML
-private void randomizeTiles(ActionEvent event) {
-    // Get the current scene and find the GridPane in it
-    Scene currentScene = ((Node) event.getSource()).getScene();
-    GridPane grid = null;
-    
-    // Search for the GridPane in the scene's root node
-    if (currentScene.getRoot() instanceof BorderPane) {
-        BorderPane root = (BorderPane) currentScene.getRoot();
-        grid = (GridPane) root.getCenter();
-    }
-    
-    if (grid == null) {
-        System.out.println("Grid not found!");
-        return;
-    }
-    
-    // Get all buttons from the grid and randomize their properties
-    for (Node node : grid.getChildren()) {
-        if (node instanceof Button) {
-            Button button = (Button) node;
-            
-            // Randomly select terrain type (Grass, Water, or Obstacle)
-            String[] terrainTypes = {"Grass", "Water", "Obstacle"};
-            String randomTerrain = terrainTypes[(int) (Math.random() * terrainTypes.length)];
-            
-            // Random elevation between 0 and 10
-            int randomElevation = (int) (Math.random() * 11);
-            
-            // Apply the random terrain style
-            switch (randomTerrain) {
-                case "Grass":
-                    button.setStyle("-fx-background-color: mediumseagreen;");
-                    break;
-                case "Water":
-                    button.setStyle("-fx-background-color: aqua;");
-                    break;
-                case "Obstacle":
-                    button.setStyle("-fx-background-color: dimgray;");
-                    break;
-            }
-            
-            // Store the terrain type and elevation in the button's properties
-            button.getProperties().put("terrainType", randomTerrain);
-            button.getProperties().put("elevation", randomElevation);
-            
-            button.setText(String.valueOf(randomElevation));
+    @FXML
+    private void randomizeTiles(ActionEvent event) {
+        // Get the current scene and find the GridPane in it
+        Scene currentScene = ((Node) event.getSource()).getScene();
+        GridPane grid = null;
+
+        // Search for the GridPane in the scene's root node
+        if (currentScene.getRoot() instanceof BorderPane) {
+            BorderPane root = (BorderPane) currentScene.getRoot();
+            grid = (GridPane) root.getCenter();
         }
+
+        if (grid == null) {
+            System.out.println("Grid not found!");
+            return;
+        }
+
+        // Get all buttons from the grid and randomize their properties
+        for (Node node : grid.getChildren()) {
+            if (node instanceof Button) {
+                Button button = (Button) node;
+
+                // Randomly select terrain type (Grass, Water, or Obstacle)
+                String[] terrainTypes = {"Grass", "Water", "Obstacle"};
+                String randomTerrain = terrainTypes[(int) (Math.random() * terrainTypes.length)];
+
+                // Random elevation between 0 and 10
+                int randomElevation = (int) (Math.random() * 11);
+
+                // Apply the random terrain style
+                switch (randomTerrain) {
+                    case "Grass":
+                        button.setStyle("-fx-background-color: mediumseagreen;");
+                        break;
+                    case "Water":
+                        button.setStyle("-fx-background-color: aqua;");
+                        break;
+                    case "Obstacle":
+                        button.setStyle("-fx-background-color: dimgray;");
+                        break;
+                }
+
+                // Store the terrain type and elevation in the button's properties
+                button.getProperties().put("terrainType", randomTerrain);
+                button.getProperties().put("elevation", randomElevation);
+
+                button.setText(String.valueOf(randomElevation));
+            }
+        }
+
+        System.out.println("All tiles have been randomized!");
     }
-    
-    System.out.println("All tiles have been randomized!");
-}
 
     @FXML
     private void runSearch(ActionEvent event) {
@@ -235,7 +235,7 @@ private void randomizeTiles(ActionEvent event) {
             Stage dialogStage = new Stage();
             dialogStage.setTitle("Manage");
             dialogStage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
-            dialogStage.setScene(new Scene(root, 358, 254));
+            dialogStage.setScene(new Scene(root, 490, 305));
             dialogStage.centerOnScreen();
             dialogStage.showAndWait();
 
