@@ -3,15 +3,24 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.RadioButton?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ToggleGroup?>
 <?import javafx.scene.layout.AnchorPane?>
 
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="254.0" prefWidth="358.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.example.aiproject.ComboBoxController">
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="305.0" prefWidth="488.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.example.aiproject.ComboBoxController">
    <children>
-      <ComboBox fx:id="coboBox" layoutX="106.0" layoutY="73.0" prefHeight="26.0" prefWidth="139.0" visibleRowCount="1" AnchorPane.leftAnchor="106.0" AnchorPane.rightAnchor="64.0" />
-      <Button layoutX="106.0" layoutY="195.0" mnemonicParsing="false" onAction="#confirm" text="confirm" />
+      <ComboBox fx:id="coboBox" layoutX="106.0" layoutY="73.0" prefHeight="26.0" prefWidth="139.0" visibleRowCount="3" AnchorPane.leftAnchor="106.0" AnchorPane.rightAnchor="64.0" />
+      <Button layoutX="216.0" layoutY="208.0" mnemonicParsing="false" onAction="#confirm" text="confirm" />
       <TextField fx:id="elevation" layoutX="106.0" layoutY="29.0" />
       <Label layoutX="14.0" layoutY="78.0" text="Tile Type" />
       <Label layoutX="14.0" layoutY="34.0" text="Elevation (0-10)" />
+      <RadioButton fx:id="startingPointRadioButton" layoutX="15.0" layoutY="127.0" mnemonicParsing="false" text="Starting Point">
+         <toggleGroup>
+            <ToggleGroup fx:id="pointSelection" />
+         </toggleGroup>
+      </RadioButton>
+      <RadioButton fx:id="endingPointRadioButton" layoutX="15.0" layoutY="160.0" mnemonicParsing="false" text="Ending Point" toggleGroup="$pointSelection" />
+      <Label layoutX="42.0" layoutY="253.0" text="Note: Starting and Ending point MUST be Grass, and one point each per grid" />
    </children>
 </AnchorPane>
