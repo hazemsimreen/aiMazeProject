@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.paint.Color;
 
 public class TieController {
 
@@ -29,6 +30,9 @@ public class TieController {
 
     @FXML
     private TextField rowsCount;
+
+    private Button currentStartingPoint = null;
+    private Button currentEndingPoint = null;
 
     Perceptron perceptron;
 
@@ -231,6 +235,7 @@ public class TieController {
 
             ComboBoxController comboController = loader.getController();
             comboController.setTargetButton(clickedButton);
+            comboController.setMainController(this);  // Pass the reference to TieController
 
             Stage dialogStage = new Stage();
             dialogStage.setTitle("Manage");
@@ -241,6 +246,44 @@ public class TieController {
 
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    public void setStartingPoint(Button button) {
+        // Clear previous starting point if exists
+        if (currentStartingPoint != null) {
+            currentStartingPoint.getProperties().put("isStartingPoint", false);
+            currentStartingPoint.setBorder(null);
+        }
+
+        // Set new starting point
+        currentStartingPoint = button;
+        if (button != null) {
+            button.getProperties().put("isStartingPoint", true);
+            button.setBorder(new Border(new BorderStroke(
+                    Color.RED,
+                    BorderStrokeStyle.SOLID,
+                    new CornerRadii(0),
+                    new BorderWidths(3))));
+        }
+    }
+
+    public void setEndingPoint(Button button) {
+        // Clear previous ending point if exists
+        if (currentEndingPoint != null) {
+            currentEndingPoint.getProperties().put("isEndingPoint", false);
+            currentEndingPoint.setBorder(null);
+        }
+
+        // Set new ending point
+        currentEndingPoint = button;
+        if (button != null) {
+            button.getProperties().put("isEndingPoint", true);
+            button.setBorder(new Border(new BorderStroke(
+                    Color.ORANGE,
+                    BorderStrokeStyle.SOLID,
+                    new CornerRadii(0),
+                    new BorderWidths(3))));
         }
     }
 
@@ -273,4 +316,5 @@ public class TieController {
         perceptron = new Perceptron(3);
         perceptron.train(inputArray, labelArray, 20);
     }
+
 }

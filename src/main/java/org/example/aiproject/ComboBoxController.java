@@ -5,7 +5,15 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.RadioButton;
 import javafx.scene.control.TextField;
+import javafx.scene.paint.Color;
+import javafx.scene.layout.Border;
+import javafx.scene.layout.BorderStroke;
+import javafx.scene.layout.BorderStrokeStyle;
+import javafx.scene.layout.BorderWidths;
+import javafx.scene.layout.CornerRadii;
+import javax.swing.JOptionPane;
 
 public class ComboBoxController {
 
@@ -13,12 +21,23 @@ public class ComboBoxController {
     private ComboBox<String> coboBox;
 
     private Button targetButton;
+    private TieController mainController;
 
     @FXML
     private TextField elevation;
-
+    
+    @FXML
+    private RadioButton startingPointRadioButton;
+    
+    @FXML
+    private RadioButton endingPointRadioButton;
+    
     public void setTargetButton(Button button) {
         this.targetButton = button;
+    }
+    
+    public void setMainController(TieController controller) {
+        this.mainController = controller;
     }
 
     @FXML
@@ -42,6 +61,41 @@ public class ComboBoxController {
             String selectedItem = coboBox.getValue();
 
             if (selectedItem != null && targetButton != null) {
+                // Store the terrain type and elevation in the button's properties
+                targetButton.getProperties().put("terrainType", selectedItem);
+                targetButton.getProperties().put("elevation", value);
+                
+                // Handle starting/ending point selection
+                if (startingPointRadioButton.isSelected()) {
+                    if (!selectedItem.equals("Grass")) {
+                        JOptionPane.showMessageDialog(null, 
+                            "Starting point can only be set on Grass terrain!", 
+                            "Invalid Terrain", 
+                            JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                    mainController.setStartingPoint(targetButton);
+                } else if (endingPointRadioButton.isSelected()) {
+                    if (!selectedItem.equals("Grass")) {
+                        JOptionPane.showMessageDialog(null, 
+                            "Ending point can only be set on Grass terrain!", 
+                            "Invalid Terrain", 
+                            JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                    mainController.setEndingPoint(targetButton);
+                } else {
+                    // If neither radio button is selected and the button was the current starting or ending point
+                    // => Reset it
+                    if (Boolean.TRUE.equals(targetButton.getProperties().get("isStartingPoint"))) {
+                        mainController.setStartingPoint(null);
+                    }
+                    if (Boolean.TRUE.equals(targetButton.getProperties().get("isEndingPoint"))) {
+                        mainController.setEndingPoint(null);
+                    }
+                }
+                
+                // Set the button color based on terrain type
                 switch (selectedItem) {
                     case "Grass":
                         targetButton.setStyle("-fx-background-color: mediumseagreen;");
@@ -63,5 +117,4 @@ public class ComboBoxController {
             System.out.println("Please enter a valid number between 0 and 10.");
         }
     }
-
 }
