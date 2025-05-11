@@ -17,6 +17,7 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 
 public class TieController {
 
@@ -43,7 +44,7 @@ public class TieController {
 
             // Create a BorderPane to hold the grid and labels
             BorderPane mainPane = new BorderPane();
-            mainPane.setPrefSize(500, 500);
+            mainPane.setPrefSize(500, 550); // Increased height to accommodate buttons
 
             GridPane grid = new GridPane();
             grid.setPrefSize(500, 500);
@@ -125,14 +126,27 @@ public class TieController {
                 rightLabels.getChildren().add(rightLabel);
             }
 
+            // Create control buttons at the bottom
+            HBox controlButtons = new HBox(20); // 20px spacing between buttons
+            controlButtons.setPadding(new Insets(10));
+            controlButtons.setAlignment(Pos.CENTER);
+            
+            Button randomizeButton = new Button("Randomize Tiles");
+            randomizeButton.setOnAction(this::randomizeTiles);
+            
+            Button runSearchButton = new Button("Run Search");
+            runSearchButton.setOnAction(this::runSearch);
+            
+            controlButtons.getChildren().addAll(randomizeButton, runSearchButton);
+
             // Add all components to the main pane
             mainPane.setCenter(grid);
             mainPane.setTop(topLabels);
-            mainPane.setBottom(bottomLabels);
+            mainPane.setBottom(new VBox(bottomLabels, controlButtons)); // Combine labels and buttons
             mainPane.setLeft(leftLabels);
             mainPane.setRight(rightLabels);
 
-            Scene gridScene = new Scene(mainPane, 500, 500);
+            Scene gridScene = new Scene(mainPane, 500, 550); // Increased height
             Stage stage = (Stage) ((Node) actionEvent.getSource()).getScene().getWindow();
             stage.setScene(gridScene);
 
@@ -142,6 +156,18 @@ public class TieController {
             alert.setHeaderText("Please enter valid numbers for rows and columns.");
             alert.showAndWait();
         }
+    }
+
+    @FXML
+    private void randomizeTiles(ActionEvent event) {
+        // TODO: Implement randomization logic
+        throw new UnsupportedOperationException("randomizeTiles not implemented yet");
+    }
+
+    @FXML
+    private void runSearch(ActionEvent event) {
+        // TODO: Implement search logic
+        throw new UnsupportedOperationException("runSearch not implemented yet");
     }
 
     private Label createCoordinateLabel(String text, double fontSize) {
@@ -200,5 +226,4 @@ public class TieController {
         perceptron = new Perceptron(3);
         perceptron.train(inputArray, labelArray, 20);
     }
-
 }
