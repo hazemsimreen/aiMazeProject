@@ -19,6 +19,7 @@ import java.util.List;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.paint.Color;
+import javax.swing.JOptionPane;
 
 public class TieController {
 
@@ -179,6 +180,21 @@ public class TieController {
             return;
         }
 
+        // Clear current starting and ending points
+        if (currentStartingPoint != null) {
+            currentStartingPoint.getProperties().put("isStartingPoint", false);
+            currentStartingPoint.setBorder(null);
+            currentStartingPoint = null;
+        }
+        if (currentEndingPoint != null) {
+            currentEndingPoint.getProperties().put("isEndingPoint", false);
+            currentEndingPoint.setBorder(null);
+            currentEndingPoint = null;
+        }
+
+        // First collect all grass tiles
+        List<Button> grassTiles = new ArrayList<>();
+
         // Get all buttons from the grid and randomize their properties
         for (Node node : grid.getChildren()) {
             if (node instanceof Button) {
@@ -195,6 +211,7 @@ public class TieController {
                 switch (randomTerrain) {
                     case "Grass":
                         button.setStyle("-fx-background-color: mediumseagreen;");
+                        grassTiles.add(button); // Add to grass tiles list
                         break;
                     case "Water":
                         button.setStyle("-fx-background-color: aqua;");
@@ -210,6 +227,36 @@ public class TieController {
 
                 button.setText(String.valueOf(randomElevation));
             }
+        }
+
+        // Set random starting and ending points (must be on grass and different tiles)
+        if (grassTiles.size() >= 2) {
+            // Random starting point
+            int startIndex = (int) (Math.random() * grassTiles.size());
+            Button startButton = grassTiles.get(startIndex);
+            setStartingPoint(startButton);
+
+            // Remove starting point from available grass tiles
+            grassTiles.remove(startIndex);
+
+            // Random ending point (from remaining grass tiles)
+            int endIndex = (int) (Math.random() * grassTiles.size());
+            Button endButton = grassTiles.get(endIndex);
+            setEndingPoint(endButton);
+        } else if (grassTiles.size() == 1) {
+            // Only one grass tile - set it as starting point
+            setStartingPoint(grassTiles.get(0));
+            // Show warning about missing ending point using JOptionPane
+            JOptionPane.showMessageDialog(null,
+                    "Could only set starting point. Add more grass tiles to set an ending point.",
+                    "Only one grass tile available",
+                    JOptionPane.WARNING_MESSAGE);
+        } else {
+            // No grass tiles available
+            JOptionPane.showMessageDialog(null,
+                    "Could not set starting or ending points. Add some grass tiles first.",
+                    "No grass tiles available",
+                    JOptionPane.WARNING_MESSAGE);
         }
 
         System.out.println("All tiles have been randomized!");
