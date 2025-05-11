@@ -8,7 +8,7 @@
 <?import javafx.scene.control.ToggleGroup?>
 <?import javafx.scene.layout.AnchorPane?>
 
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="305.0" prefWidth="488.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.example.aiproject.ComboBoxController">
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="305.0" prefWidth="490.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.example.aiproject.ComboBoxController">
    <children>
       <ComboBox fx:id="coboBox" layoutX="106.0" layoutY="73.0" prefHeight="26.0" prefWidth="139.0" visibleRowCount="3" AnchorPane.leftAnchor="106.0" AnchorPane.rightAnchor="64.0" />
       <Button layoutX="216.0" layoutY="208.0" mnemonicParsing="false" onAction="#confirm" text="confirm" />
