@@ -43,6 +43,7 @@ public class ComboBoxController {
     @FXML
     public void initialize() {
         coboBox.setItems(FXCollections.observableArrayList("Grass", "Water", "Obstacle"));
+        coboBox.setValue("Grass");
     }
 
     @FXML
@@ -67,7 +68,7 @@ public class ComboBoxController {
                 
                 // Handle starting/ending point selection
                 if (startingPointRadioButton.isSelected()) {
-                    if (!selectedItem.equals("Grass")) {
+                    if (selectedItem != null && !selectedItem.equals("Grass")) {
                         JOptionPane.showMessageDialog(null, 
                             "Starting point can only be set on Grass terrain!", 
                             "Invalid Terrain", 
@@ -76,7 +77,7 @@ public class ComboBoxController {
                     }
                     mainController.setStartingPoint(targetButton);
                 } else if (endingPointRadioButton.isSelected()) {
-                    if (!selectedItem.equals("Grass")) {
+                    if (selectedItem != null && !selectedItem.equals("Grass")) {
                         JOptionPane.showMessageDialog(null, 
                             "Ending point can only be set on Grass terrain!", 
                             "Invalid Terrain", 
