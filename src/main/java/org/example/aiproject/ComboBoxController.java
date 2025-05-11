@@ -17,8 +17,6 @@ public class ComboBoxController {
     @FXML
     private TextField elevation;
 
-
-
     public void setTargetButton(Button button) {
         this.targetButton = button;
     }
@@ -41,7 +39,6 @@ public class ComboBoxController {
 
             System.out.println("Elevation value: " + value);
 
-
             String selectedItem = coboBox.getValue();
 
             if (selectedItem != null && targetButton != null) {
@@ -58,6 +55,7 @@ public class ComboBoxController {
                 }
             }
 
+            targetButton.setText(String.valueOf(value));
 
             ((Button) event.getSource()).getScene().getWindow().hide();
 
