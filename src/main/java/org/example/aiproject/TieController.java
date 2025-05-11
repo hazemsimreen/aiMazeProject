@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
+import javafx.geometry.Insets;
 
 public class TieController {
 
@@ -33,32 +34,43 @@ public class TieController {
     public TieController() {
         trainPerceptronUsingInputData();
     }
-    
-    
 
     @FXML
     public void createGrid(ActionEvent actionEvent) {
-
         try {
             int rows = Integer.parseInt(rowsCount.getText());
             int columns = Integer.parseInt(columnsCount.getText());
+
+            // Create a BorderPane to hold the grid and labels
+            BorderPane mainPane = new BorderPane();
+            mainPane.setPrefSize(500, 500);
 
             GridPane grid = new GridPane();
             grid.setPrefSize(500, 500);
             grid.setGridLinesVisible(true);
 
+            // Calculate tile size based on grid dimensions
+            double tileWidth = 500.0 / columns;
+            double tileHeight = 500.0 / rows;
+
+            // Calculate font size based on tile size (smaller dimension)
+            double fontSize = Math.min(tileWidth, tileHeight) * 0.2;
+
+            // Set up column constraints
             for (int col = 0; col < columns; col++) {
                 ColumnConstraints colConst = new ColumnConstraints();
                 colConst.setPercentWidth(100.0 / columns);
                 grid.getColumnConstraints().add(colConst);
             }
 
+            // Set up row constraints
             for (int row = 0; row < rows; row++) {
                 RowConstraints rowConst = new RowConstraints();
                 rowConst.setPercentHeight(100.0 / rows);
                 grid.getRowConstraints().add(rowConst);
             }
 
+            // Create buttons for the grid
             for (int row = 0; row < rows; row++) {
                 for (int col = 0; col < columns; col++) {
                     Button button = new Button();
@@ -74,7 +86,53 @@ public class TieController {
                 }
             }
 
-            Scene gridScene = new Scene(grid, 500, 500);
+            // Create top and bottom coordinate labels (for x-axis)
+            HBox topLabels = new HBox();
+            topLabels.setPrefHeight(fontSize * 2); // Give some space for the labels
+            HBox bottomLabels = new HBox();
+            bottomLabels.setPrefHeight(fontSize * 2);
+
+            for (int col = 0; col < columns; col++) {
+                Label topLabel = createCoordinateLabel(String.valueOf(col), fontSize);
+                Label bottomLabel = createCoordinateLabel(String.valueOf(col), fontSize);
+
+                // Set flexible width to match tile width
+                topLabel.setPrefWidth(tileWidth);
+                bottomLabel.setPrefWidth(tileWidth);
+
+                topLabels.getChildren().add(topLabel);
+                bottomLabels.getChildren().add(bottomLabel);
+            }
+
+            // Create left and right coordinate labels (for y-axis)
+            VBox leftLabels = new VBox();
+            leftLabels.setPrefWidth(fontSize * 2);
+            VBox rightLabels = new VBox();
+            rightLabels.setPrefWidth(fontSize * 2);
+
+            //extra padding for rightLabels
+            rightLabels.setPadding(new Insets(5, 5, 5, 10));
+
+            for (int row = 0; row < rows; row++) {
+                Label leftLabel = createCoordinateLabel(String.valueOf(row), fontSize);
+                Label rightLabel = createCoordinateLabel(String.valueOf(row), fontSize);
+
+                // Set flexible height to match tile height
+                leftLabel.setPrefHeight(tileHeight);
+                rightLabel.setPrefHeight(tileHeight);
+
+                leftLabels.getChildren().add(leftLabel);
+                rightLabels.getChildren().add(rightLabel);
+            }
+
+            // Add all components to the main pane
+            mainPane.setCenter(grid);
+            mainPane.setTop(topLabels);
+            mainPane.setBottom(bottomLabels);
+            mainPane.setLeft(leftLabels);
+            mainPane.setRight(rightLabels);
+
+            Scene gridScene = new Scene(mainPane, 500, 500);
             Stage stage = (Stage) ((Node) actionEvent.getSource()).getScene().getWindow();
             stage.setScene(gridScene);
 
@@ -84,6 +142,12 @@ public class TieController {
             alert.setHeaderText("Please enter valid numbers for rows and columns.");
             alert.showAndWait();
         }
+    }
+
+    private Label createCoordinateLabel(String text, double fontSize) {
+        Label label = new Label(text);
+        label.setStyle("-fx-font-size: " + fontSize + "px; -fx-alignment: center;");
+        return label;
     }
 
     @FXML
