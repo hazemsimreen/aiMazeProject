@@ -176,7 +176,10 @@ public class TieController {
         }
 
         if (grid == null) {
-            System.out.println("Grid not found!");
+            JOptionPane.showMessageDialog(null,
+                    "Grid not found!",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
             return;
         }
 
@@ -246,20 +249,17 @@ public class TieController {
         } else if (grassTiles.size() == 1) {
             // Only one grass tile - set it as starting point
             setStartingPoint(grassTiles.get(0));
-            // Show warning about missing ending point using JOptionPane
             JOptionPane.showMessageDialog(null,
                     "Could only set starting point. Add more grass tiles to set an ending point.",
                     "Only one grass tile available",
                     JOptionPane.WARNING_MESSAGE);
         } else {
-            // No grass tiles available
             JOptionPane.showMessageDialog(null,
                     "Could not set starting or ending points. Add some grass tiles first.",
                     "No grass tiles available",
                     JOptionPane.WARNING_MESSAGE);
         }
 
-        System.out.println("All tiles have been randomized!");
     }
 
     @FXML
@@ -292,7 +292,10 @@ public class TieController {
             dialogStage.showAndWait();
 
         } catch (IOException e) {
-            e.printStackTrace();
+            JOptionPane.showMessageDialog(null,
+                    "Error loading dialog: " + e.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -354,7 +357,10 @@ public class TieController {
                 }
             }
         } catch (IOException e) {
-            System.err.println("Error reading file: " + e.getMessage());
+            JOptionPane.showMessageDialog(null,
+                    "Error reading training data file: " + e.getMessage(),
+                    "File Error",
+                    JOptionPane.ERROR_MESSAGE);
             return;
         }
         double[][] inputArray = inputList.toArray(new double[0][]);
@@ -363,5 +369,4 @@ public class TieController {
         perceptron = new Perceptron(3);
         perceptron.train(inputArray, labelArray, 20);
     }
-
 }
