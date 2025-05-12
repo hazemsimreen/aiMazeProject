@@ -16,6 +16,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.PriorityQueue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.paint.Color;
@@ -262,16 +264,275 @@ public class TieController {
 
     }
 
-    @FXML
-    private void runSearch(ActionEvent event) {
-        // TODO: Implement search logic
-        throw new UnsupportedOperationException("runSearch not implemented yet");
-    }
-
     private Label createCoordinateLabel(String text, double fontSize) {
         Label label = new Label(text);
         label.setStyle("-fx-font-size: " + fontSize + "px; -fx-alignment: center;");
         return label;
+    }
+
+    @FXML
+    private void runSearch(ActionEvent event) {
+
+        // Get the current scene and find the GridPane in it
+        Scene currentScene = ((Node) event.getSource()).getScene();
+        GridPane grid = null;
+
+        if (currentScene.getRoot() instanceof BorderPane) {
+            BorderPane root = (BorderPane) currentScene.getRoot();
+            grid = (GridPane) root.getCenter();
+        }
+
+        if (grid == null) {
+            JOptionPane.showMessageDialog(null,
+                    "Grid not found!",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Check if we have both start and end points
+        if (currentStartingPoint == null || currentEndingPoint == null) {
+            JOptionPane.showMessageDialog(null,
+                    "Please set both starting and ending points before running search.",
+                    "Missing Points",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // Get coordinates of start and end points
+        int startX = GridPane.getColumnIndex(currentStartingPoint);
+        int startY = GridPane.getRowIndex(currentStartingPoint);
+        int endX = GridPane.getColumnIndex(currentEndingPoint);
+        int endY = GridPane.getRowIndex(currentEndingPoint);
+
+        // Reset all tile colors (except obstacles, water, and special points)
+        resetGridColors(grid);
+
+        // Perform A* search
+        List<AStarNode> testedPath = new ArrayList<>();
+        List<AStarNode> finalPath = aStarSearch(grid, startX, startY, endX, endY, testedPath);
+
+        // Display tested path (in red)
+        for (AStarNode node : testedPath) {
+            Button button = getButtonAt(grid, node.x, node.y);
+            if (button != null && !button.equals(currentStartingPoint) && !button.equals(currentEndingPoint)) {
+                button.setStyle("-fx-background-color: lightcoral;");
+            }
+        }
+
+        // Display final path (in dark orange) if found
+        if (finalPath != null && !finalPath.isEmpty()) {
+            for (AStarNode node : finalPath) {
+                Button button = getButtonAt(grid, node.x, node.y);
+                if (button != null && !button.equals(currentStartingPoint) && !button.equals(currentEndingPoint)) {
+                    button.setStyle("-fx-background-color: darkorange;");
+                }
+            }
+        } else {
+            JOptionPane.showMessageDialog(null,
+                    "No safe path found from start to end!",
+                    "No Path Found",
+                    JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+
+    private void resetGridColors(GridPane grid) {
+        for (Node node : grid.getChildren()) {
+            if (node instanceof Button) {
+                Button button = (Button) node;
+                String terrainType = (String) button.getProperties().get("terrainType");
+
+                // Don't reset special points or obstacles/water
+                if (button.equals(currentStartingPoint) || button.equals(currentEndingPoint)) {
+                    continue;
+                }
+
+                if ("Grass".equals(terrainType)) {
+                    button.setStyle("-fx-background-color: mediumseagreen;");
+                } else if ("Water".equals(terrainType)) {
+                    button.setStyle("-fx-background-color: aqua;");
+                } else if ("Obstacle".equals(terrainType)) {
+                    button.setStyle("-fx-background-color: dimgray;");
+                }
+            }
+        }
+    }
+
+    private Button getButtonAt(GridPane grid, int x, int y) {
+        for (Node node : grid.getChildren()) {
+            Integer colIndex = GridPane.getColumnIndex(node);
+            Integer rowIndex = GridPane.getRowIndex(node);
+            if (colIndex != null && rowIndex != null && colIndex == x && rowIndex == y) {
+                return (Button) node;
+            }
+        }
+        return null;
+    }
+
+    private List<AStarNode> aStarSearch(GridPane grid, int startX, int startY, int endX, int endY, List<AStarNode> testedPath) {
+        // Create open and closed lists
+        PriorityQueue<AStarNode> openList = new PriorityQueue<>();
+        List<AStarNode> closedList = new ArrayList<>();
+
+        // Create start and end nodes
+        AStarNode startNode = new AStarNode(startX, startY);
+        AStarNode endNode = new AStarNode(endX, endY);
+
+        // Add the start node to open list
+        openList.add(startNode);
+
+        while (!openList.isEmpty()) {
+            // Get the node with the lowest f cost
+            AStarNode currentNode = openList.poll();
+            testedPath.add(currentNode);
+
+            // Check if we've reached the end
+            if (currentNode.equals(endNode)) {
+                return reconstructPath(currentNode);
+            }
+
+            // Generate neighbors
+            List<AStarNode> neighbors = getNeighbors(grid, currentNode);
+
+            for (AStarNode neighbor : neighbors) {
+                // Skip if neighbor is in closed list or not walkable
+                if (closedList.contains(neighbor) || !isTileSafe(grid, neighbor.x, neighbor.y)) {
+                    continue;
+                }
+
+                // Calculate tentative g score
+                double tentativeGScore = currentNode.g + 1; // Assuming each step costs 1
+
+                // Check if this path to neighbor is better
+                if (!openList.contains(neighbor) || tentativeGScore < neighbor.g) {
+                    neighbor.parent = currentNode;
+                    neighbor.g = tentativeGScore;
+                    neighbor.h = manhattanDistance(neighbor, endNode);
+                    neighbor.f = neighbor.g + neighbor.h;
+
+                    if (!openList.contains(neighbor)) {
+                        openList.add(neighbor);
+                    }
+                }
+            }
+
+            // Add current node to closed list
+            closedList.add(currentNode);
+        }
+
+        // No path found
+        return null;
+    }
+
+    private List<AStarNode> getNeighbors(GridPane grid, AStarNode node) {
+        List<AStarNode> neighbors = new ArrayList<>();
+        int[][] directions = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}}; // 4-directional movement
+
+        for (int[] dir : directions) {
+            int newX = node.x + dir[0];
+            int newY = node.y + dir[1];
+
+            // Check if within grid bounds
+            if (newX >= 0 && newX < grid.getColumnCount() && newY >= 0 && newY < grid.getRowCount()) {
+                neighbors.add(new AStarNode(newX, newY));
+            }
+        }
+
+        return neighbors;
+    }
+
+    private boolean isTileSafe(GridPane grid, int x, int y) {
+        Button button = getButtonAt(grid, x, y);
+        if (button == null) {
+            return false;
+        }
+
+        // Get tile properties
+        String terrainType = (String) button.getProperties().get("terrainType");
+        int elevation = (int) button.getProperties().get("elevation");
+
+        // Calculate Manhattan distance to nearest obstacle
+        int distanceToObstacle = calculateDistanceToNearestObstacle(grid, x, y);
+
+        // Prepare features for perceptron
+        double[] features = new double[3];
+        features[0] = "Grass".equals(terrainType) ? 0 : 1; // Grass=0, Water=1
+        features[1] = elevation;
+        features[2] = distanceToObstacle;
+
+        // Use perceptron to classify
+        return perceptron.predict(features) == 1;
+    }
+
+    private int calculateDistanceToNearestObstacle(GridPane grid, int x, int y) {
+        int minDistance = Integer.MAX_VALUE;
+
+        for (Node node : grid.getChildren()) {
+            if (node instanceof Button) {
+                Button button = (Button) node;
+                if ("Obstacle".equals(button.getProperties().get("terrainType"))) {
+                    int obstacleX = GridPane.getColumnIndex(button);
+                    int obstacleY = GridPane.getRowIndex(button);
+                    int distance = (int) manhattanDistance(new AStarNode(x, y), new AStarNode(obstacleX, obstacleY));
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                    }
+                }
+            }
+        }
+
+        return minDistance == Integer.MAX_VALUE ? 10 : minDistance; // Default to 10 if no obstacles
+    }
+
+    private double manhattanDistance(AStarNode a, AStarNode b) {
+        return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+    }
+
+    private List<AStarNode> reconstructPath(AStarNode endNode) {
+        List<AStarNode> path = new ArrayList<>();
+        AStarNode current = endNode;
+
+        while (current != null) {
+            path.add(0, current); // Add to beginning to reverse the order
+            current = current.parent;
+        }
+
+        return path;
+    }
+
+// Renamed Node class to AStarNode
+    private static class AStarNode implements Comparable<AStarNode> {
+
+        int x, y;
+        double f = 0, g = 0, h = 0;
+        AStarNode parent = null;
+
+        public AStarNode(int x, int y) {
+            this.x = x;
+            this.y = y;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null || getClass() != obj.getClass()) {
+                return false;
+            }
+            AStarNode node = (AStarNode) obj;
+            return x == node.x && y == node.y;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(x, y);
+        }
+
+        @Override
+        public int compareTo(AStarNode other) {
+            return Double.compare(this.f, other.f);
+        }
     }
 
     @FXML
