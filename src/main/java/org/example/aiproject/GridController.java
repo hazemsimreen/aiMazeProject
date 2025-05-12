@@ -24,62 +24,63 @@ import javafx.geometry.Pos;
 import javafx.scene.paint.Color;
 import javax.swing.JOptionPane;
 
-public class TieController {
-
-    @FXML
-    private TextField columnsCount;
-
-    @FXML
-    private Button create;
-
-    @FXML
-    private TextField rowsCount;
+public class GridController {
 
     private Button currentStartingPoint = null;
     private Button currentEndingPoint = null;
 
     Perceptron perceptron;
 
-    public TieController() {
+    @FXML
+    BorderPane mainPane;
+
+    private int rowsCount;
+    private int columnsCount;
+
+    @FXML
+    public void initialize() {
         trainPerceptronUsingInputData();
     }
 
     @FXML
-    public void createGrid(ActionEvent actionEvent) {
+    public void createGrid() {
+        System.out.println("createGrid() method called");
         try {
-            int rows = Integer.parseInt(rowsCount.getText());
-            int columns = Integer.parseInt(columnsCount.getText());
+            int rows = rowsCount;
+            int columns = columnsCount;
 
-            // Create a BorderPane to hold the grid and labels
-            BorderPane mainPane = new BorderPane();
-            mainPane.setPrefSize(500, 550); // Increased height to accommodate buttons
+            System.out.println("Creating grid with " + rows + " rows and " + columns + " columns");
+
+            if (mainPane == null) {
+                System.err.println("Error: mainPane is null. Ensure it's properly injected via @FXML.");
+                return;
+            }
+
+            mainPane.setPrefSize(500, 550); // Set preferred size for main pane
 
             GridPane grid = new GridPane();
             grid.setPrefSize(500, 500);
             grid.setGridLinesVisible(true);
 
-            // Calculate tile size based on grid dimensions
             double tileWidth = 500.0 / columns;
             double tileHeight = 500.0 / rows;
-
-            // Calculate font size based on tile size (smaller dimension)
             double fontSize = Math.min(tileWidth, tileHeight) * 0.2;
 
-            // Set up column constraints
+            grid.getColumnConstraints().clear();
+            grid.getRowConstraints().clear();
+
             for (int col = 0; col < columns; col++) {
                 ColumnConstraints colConst = new ColumnConstraints();
                 colConst.setPercentWidth(100.0 / columns);
                 grid.getColumnConstraints().add(colConst);
             }
 
-            // Set up row constraints
             for (int row = 0; row < rows; row++) {
                 RowConstraints rowConst = new RowConstraints();
                 rowConst.setPercentHeight(100.0 / rows);
                 grid.getRowConstraints().add(rowConst);
             }
 
-            // Create buttons for the grid
             for (int row = 0; row < rows; row++) {
                 for (int col = 0; col < columns; col++) {
                     Button button = new Button();
@@ -87,17 +88,14 @@ public class TieController {
                     button.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
 
                     grid.add(button, col, row);
-
                     GridPane.setHgrow(button, Priority.ALWAYS);
                     GridPane.setVgrow(button, Priority.ALWAYS);
-
                     button.setOnAction(e -> showDiallogBox(button));
                 }
             }
 
-            // Create top and bottom coordinate labels (for x-axis)
             HBox topLabels = new HBox();
-            topLabels.setPrefHeight(fontSize * 2); // Give some space for the labels
+            topLabels.setPrefHeight(fontSize * 2);
             HBox bottomLabels = new HBox();
             bottomLabels.setPrefHeight(fontSize * 2);
 
@@ -105,7 +103,6 @@ public class TieController {
                 Label topLabel = createCoordinateLabel(String.valueOf(col), fontSize);
                 Label bottomLabel = createCoordinateLabel(String.valueOf(col), fontSize);
 
-                // Set flexible width to match tile width
                 topLabel.setPrefWidth(tileWidth);
                 bottomLabel.setPrefWidth(tileWidth);
 
@@ -113,20 +110,16 @@ public class TieController {
                 bottomLabels.getChildren().add(bottomLabel);
             }
 
-            // Create left and right coordinate labels (for y-axis)
             VBox leftLabels = new VBox();
             leftLabels.setPrefWidth(fontSize * 2);
             VBox rightLabels = new VBox();
             rightLabels.setPrefWidth(fontSize * 2);
-
-            //extra padding for rightLabels
             rightLabels.setPadding(new Insets(5, 5, 5, 10));
 
             for (int row = 0; row < rows; row++) {
                 Label leftLabel = createCoordinateLabel(String.valueOf(row), fontSize);
                 Label rightLabel = createCoordinateLabel(String.valueOf(row), fontSize);
 
-                // Set flexible height to match tile height
                 leftLabel.setPrefHeight(tileHeight);
                 rightLabel.setPrefHeight(tileHeight);
 
@@ -134,8 +127,7 @@ public class TieController {
                 rightLabels.getChildren().add(rightLabel);
             }
 
-            // Create control buttons at the bottom
-            HBox controlButtons = new HBox(20); // 20px spacing between buttons
+            HBox controlButtons = new HBox(20);
             controlButtons.setPadding(new Insets(10));
             controlButtons.setAlignment(Pos.CENTER);
 
@@ -147,16 +139,12 @@ public class TieController {
 
             controlButtons.getChildren().addAll(randomizeButton, runSearchButton);
 
-            // Add all components to the main pane
-            mainPane.setCenter(grid);
+            // Populate mainPane
             mainPane.setTop(topLabels);
-            mainPane.setBottom(new VBox(bottomLabels, controlButtons)); // Combine labels and buttons
+            mainPane.setCenter(grid);
+            mainPane.setBottom(new VBox(bottomLabels, controlButtons));
             mainPane.setLeft(leftLabels);
             mainPane.setRight(rightLabels);
-
-            Scene gridScene = new Scene(mainPane, 500, 550); // Increased height
-            Stage stage = (Stage) ((Node) actionEvent.getSource()).getScene().getWindow();
-            stage.setScene(gridScene);
 
         } catch (NumberFormatException e) {
             Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -168,15 +156,8 @@ public class TieController {
 
     @FXML
     private void randomizeTiles(ActionEvent event) {
-        // Get the current scene and find the GridPane in it
-        Scene currentScene = ((Node) event.getSource()).getScene();
-        GridPane grid = null;
-
-        // Search for the GridPane in the scene's root node
-        if (currentScene.getRoot() instanceof BorderPane) {
-            BorderPane root = (BorderPane) currentScene.getRoot();
-            grid = (GridPane) root.getCenter();
-        }
+        // Get the grid from mainPane's center
+        GridPane grid = getGridFromMainPane();
 
         if (grid == null) {
             JOptionPane.showMessageDialog(null,
@@ -207,7 +188,6 @@ public class TieController {
                 Button button = (Button) node;
 
                 // Randomly select terrain type (Grass, Water, or Obstacle)
-                // Generate random number between 0 and 1
                 double randomValue = Math.random();
                 String randomTerrain;
 
@@ -272,7 +252,6 @@ public class TieController {
                     "No grass tiles available",
                     JOptionPane.WARNING_MESSAGE);
         }
-
     }
 
     private Label createCoordinateLabel(String text, double fontSize) {
@@ -282,14 +261,8 @@ public class TieController {
     }
 
     private void runSearch(ActionEvent event) {
-        // Get the current scene and find the GridPane in it
-        Scene currentScene = ((Node) event.getSource()).getScene();
-        GridPane grid = null;
-
-        if (currentScene.getRoot() instanceof BorderPane) {
-            BorderPane root = (BorderPane) currentScene.getRoot();
-            grid = (GridPane) root.getCenter();
-        }
+        // Get the grid from mainPane's center
+        GridPane grid = getGridFromMainPane();
 
         if (grid == null) {
             JOptionPane.showMessageDialog(null,
@@ -309,11 +282,11 @@ public class TieController {
         }
 
         // Get coordinates of start and end points
-        final int startX = GridPane.getColumnIndex(currentStartingPoint); // made final
-        final int startY = GridPane.getRowIndex(currentStartingPoint); // made final
-        final int endX = GridPane.getColumnIndex(currentEndingPoint); // made final
-        final int endY = GridPane.getRowIndex(currentEndingPoint); // made final
-        final GridPane finalGrid = grid; // made final copy for lambda
+        final int startX = GridPane.getColumnIndex(currentStartingPoint);
+        final int startY = GridPane.getRowIndex(currentStartingPoint);
+        final int endX = GridPane.getColumnIndex(currentEndingPoint);
+        final int endY = GridPane.getRowIndex(currentEndingPoint);
+        final GridPane finalGrid = grid;
 
         // Reset all tile colors (except obstacles, water, and special points)
         resetGridColors(grid);
@@ -336,6 +309,14 @@ public class TieController {
                 }
             });
         }).start();
+    }
+
+    // Helper method to get the grid from mainPane
+    private GridPane getGridFromMainPane() {
+        if (mainPane != null && mainPane.getCenter() instanceof GridPane) {
+            return (GridPane) mainPane.getCenter();
+        }
+        return null;
     }
 
     private List<AStarNode> aStarSearch(GridPane grid, int startX, int startY, int endX, int endY, List<AStarNode> testedPath) {
@@ -598,7 +579,7 @@ public class TieController {
 
             ComboBoxController comboController = loader.getController();
             comboController.setTargetButton(clickedButton);
-            comboController.setMainController(this);  // Pass the reference to TieController
+            comboController.setMainController(this);  // Pass the reference to InputGridController
 
             Stage dialogStage = new Stage();
             dialogStage.setTitle("Manage");
@@ -688,4 +669,16 @@ public class TieController {
         perceptron = new Perceptron(3);
         perceptron.train(inputArray, labelArray, 20);
     }
+
+    public void setRowsCount(int rowsCount) {
+        this.rowsCount = rowsCount;
+    }
+
+    public void setColumnsCount(int columnsCount) {
+        this.columnsCount = columnsCount;
+
+        //run here, since its set after rows
+        createGrid();
+    }
+
 }

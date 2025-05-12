@@ -21,7 +21,7 @@ public class ComboBoxController {
     private ComboBox<String> coboBox;
 
     private Button targetButton;
-    private TieController mainController;
+    private GridController mainController;
 
     @FXML
     private TextField elevation;
@@ -36,7 +36,7 @@ public class ComboBoxController {
         this.targetButton = button;
     }
 
-    public void setMainController(TieController controller) {
+    public void setMainController(GridController controller) {
         this.mainController = controller;
     }
 
