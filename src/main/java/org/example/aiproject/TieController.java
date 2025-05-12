@@ -207,8 +207,18 @@ public class TieController {
                 Button button = (Button) node;
 
                 // Randomly select terrain type (Grass, Water, or Obstacle)
-                String[] terrainTypes = {"Grass", "Water", "Obstacle"};
-                String randomTerrain = terrainTypes[(int) (Math.random() * terrainTypes.length)];
+                // Generate random number between 0 and 1
+                double randomValue = Math.random();
+                String randomTerrain;
+
+                // 70% grass, 15% water, 15% obstacle
+                if (randomValue < 0.7) {
+                    randomTerrain = "Grass";
+                } else if (randomValue < 0.85) {
+                    randomTerrain = "Water";
+                } else {
+                    randomTerrain = "Obstacle";
+                }
 
                 // Random elevation between 0 and 10
                 int randomElevation = (int) (Math.random() * 11);
@@ -355,7 +365,7 @@ public class TieController {
 
             // Add a small delay for visualization
             try {
-                Thread.sleep(300); // 50ms delay between node expansions
+                Thread.sleep(300); // 300ms delay between node expansions
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 return null;
@@ -420,7 +430,7 @@ public class TieController {
                 });
             }
         },
-                100 // 100ms delay between path segments
+                300 // 300ms delay between path segments
         );
     }
 
