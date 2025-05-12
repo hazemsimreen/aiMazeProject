@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.PriorityQueue;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.paint.Color;
@@ -270,9 +271,7 @@ public class TieController {
         return label;
     }
 
-    @FXML
     private void runSearch(ActionEvent event) {
-
         // Get the current scene and find the GridPane in it
         Scene currentScene = ((Node) event.getSource()).getScene();
         GridPane grid = null;
@@ -300,73 +299,33 @@ public class TieController {
         }
 
         // Get coordinates of start and end points
-        int startX = GridPane.getColumnIndex(currentStartingPoint);
-        int startY = GridPane.getRowIndex(currentStartingPoint);
-        int endX = GridPane.getColumnIndex(currentEndingPoint);
-        int endY = GridPane.getRowIndex(currentEndingPoint);
+        final int startX = GridPane.getColumnIndex(currentStartingPoint); // made final
+        final int startY = GridPane.getRowIndex(currentStartingPoint); // made final
+        final int endX = GridPane.getColumnIndex(currentEndingPoint); // made final
+        final int endY = GridPane.getRowIndex(currentEndingPoint); // made final
+        final GridPane finalGrid = grid; // made final copy for lambda
 
         // Reset all tile colors (except obstacles, water, and special points)
         resetGridColors(grid);
 
-        // Perform A* search
-        List<AStarNode> testedPath = new ArrayList<>();
-        List<AStarNode> finalPath = aStarSearch(grid, startX, startY, endX, endY, testedPath);
+        // Create a new thread for the search to allow for animation
+        new Thread(() -> {
+            List<AStarNode> testedPath = new ArrayList<>();
+            List<AStarNode> finalPath = aStarSearch(finalGrid, startX, startY, endX, endY, testedPath);
 
-        // Display tested path (in red)
-        for (AStarNode node : testedPath) {
-            Button button = getButtonAt(grid, node.x, node.y);
-            if (button != null && !button.equals(currentStartingPoint) && !button.equals(currentEndingPoint)) {
-                button.setStyle("-fx-background-color: lightcoral;");
-            }
-        }
-
-        // Display final path (in dark orange) if found
-        if (finalPath != null && !finalPath.isEmpty()) {
-            for (AStarNode node : finalPath) {
-                Button button = getButtonAt(grid, node.x, node.y);
-                if (button != null && !button.equals(currentStartingPoint) && !button.equals(currentEndingPoint)) {
-                    button.setStyle("-fx-background-color: darkorange;");
+            // After search completes, show the final path with delay
+            Platform.runLater(() -> {
+                if (finalPath != null && !finalPath.isEmpty()) {
+                    // Animate the final path one tile at a time
+                    animateFinalPath(finalGrid, finalPath, 0);
+                } else {
+                    JOptionPane.showMessageDialog(null,
+                            "No safe path found from start to end!",
+                            "No Path Found",
+                            JOptionPane.INFORMATION_MESSAGE);
                 }
-            }
-        } else {
-            JOptionPane.showMessageDialog(null,
-                    "No safe path found from start to end!",
-                    "No Path Found",
-                    JOptionPane.INFORMATION_MESSAGE);
-        }
-    }
-
-    private void resetGridColors(GridPane grid) {
-        for (Node node : grid.getChildren()) {
-            if (node instanceof Button) {
-                Button button = (Button) node;
-                String terrainType = (String) button.getProperties().get("terrainType");
-
-                // Don't reset special points or obstacles/water
-                if (button.equals(currentStartingPoint) || button.equals(currentEndingPoint)) {
-                    continue;
-                }
-
-                if ("Grass".equals(terrainType)) {
-                    button.setStyle("-fx-background-color: mediumseagreen;");
-                } else if ("Water".equals(terrainType)) {
-                    button.setStyle("-fx-background-color: aqua;");
-                } else if ("Obstacle".equals(terrainType)) {
-                    button.setStyle("-fx-background-color: dimgray;");
-                }
-            }
-        }
-    }
-
-    private Button getButtonAt(GridPane grid, int x, int y) {
-        for (Node node : grid.getChildren()) {
-            Integer colIndex = GridPane.getColumnIndex(node);
-            Integer rowIndex = GridPane.getRowIndex(node);
-            if (colIndex != null && rowIndex != null && colIndex == x && rowIndex == y) {
-                return (Button) node;
-            }
-        }
-        return null;
+            });
+        }).start();
     }
 
     private List<AStarNode> aStarSearch(GridPane grid, int startX, int startY, int endX, int endY, List<AStarNode> testedPath) {
@@ -385,6 +344,22 @@ public class TieController {
             // Get the node with the lowest f cost
             AStarNode currentNode = openList.poll();
             testedPath.add(currentNode);
+
+            // Update the UI to show the tested node
+            Platform.runLater(() -> {
+                Button button = getButtonAt(grid, currentNode.x, currentNode.y);
+                if (button != null && !button.equals(currentStartingPoint) && !button.equals(currentEndingPoint)) {
+                    button.setStyle("-fx-background-color: lightcoral;");
+                }
+            });
+
+            // Add a small delay for visualization
+            try {
+                Thread.sleep(300); // 50ms delay between node expansions
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return null;
+            }
 
             // Check if we've reached the end
             if (currentNode.equals(endNode)) {
@@ -421,6 +396,64 @@ public class TieController {
         }
 
         // No path found
+        return null;
+    }
+
+    private void animateFinalPath(GridPane grid, List<AStarNode> path, int index) {
+        if (index >= path.size()) {
+            return;
+        }
+
+        AStarNode node = path.get(index);
+        Button button = getButtonAt(grid, node.x, node.y);
+        if (button != null && !button.equals(currentStartingPoint) && !button.equals(currentEndingPoint)) {
+            button.setStyle("-fx-background-color: darkorange;");
+        }
+
+        // Schedule the next animation step after a delay
+        new java.util.Timer().schedule(
+                new java.util.TimerTask() {
+            @Override
+            public void run() {
+                Platform.runLater(() -> {
+                    animateFinalPath(grid, path, index + 1);
+                });
+            }
+        },
+                100 // 100ms delay between path segments
+        );
+    }
+
+    private void resetGridColors(GridPane grid) {
+        for (Node node : grid.getChildren()) {
+            if (node instanceof Button) {
+                Button button = (Button) node;
+                String terrainType = (String) button.getProperties().get("terrainType");
+
+                // Don't reset special points or obstacles/water
+                if (button.equals(currentStartingPoint) || button.equals(currentEndingPoint)) {
+                    continue;
+                }
+
+                if ("Grass".equals(terrainType)) {
+                    button.setStyle("-fx-background-color: mediumseagreen;");
+                } else if ("Water".equals(terrainType)) {
+                    button.setStyle("-fx-background-color: aqua;");
+                } else if ("Obstacle".equals(terrainType)) {
+                    button.setStyle("-fx-background-color: dimgray;");
+                }
+            }
+        }
+    }
+
+    private Button getButtonAt(GridPane grid, int x, int y) {
+        for (Node node : grid.getChildren()) {
+            Integer colIndex = GridPane.getColumnIndex(node);
+            Integer rowIndex = GridPane.getRowIndex(node);
+            if (colIndex != null && rowIndex != null && colIndex == x && rowIndex == y) {
+                return (Button) node;
+            }
+        }
         return null;
     }
 
