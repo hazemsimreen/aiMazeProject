@@ -350,6 +350,14 @@ public class TieController {
         // Add the start node to open list
         openList.add(startNode);
 
+        //mark starting node as visited (via filling it)
+        Platform.runLater(() -> {
+            Button button = getButtonAt(grid, startNode.x, startNode.y);
+            if (button != null) {
+                button.setStyle("-fx-background-color: red;");
+            }
+        });
+
         while (!openList.isEmpty()) {
             // Get the node with the lowest f cost
             AStarNode currentNode = openList.poll();
@@ -373,6 +381,10 @@ public class TieController {
 
             // Check if we've reached the end
             if (currentNode.equals(endNode)) {
+                Button button = getButtonAt(grid, currentNode.x, currentNode.y);
+                if (button != null) {
+                    button.setStyle("-fx-background-color: orange;");
+                }
                 return reconstructPath(currentNode);
             }
 
@@ -417,7 +429,7 @@ public class TieController {
         AStarNode node = path.get(index);
         Button button = getButtonAt(grid, node.x, node.y);
         if (button != null && !button.equals(currentStartingPoint) && !button.equals(currentEndingPoint)) {
-            button.setStyle("-fx-background-color: darkorange;");
+            button.setStyle("-fx-background-color: lime;");
         }
 
         // Schedule the next animation step after a delay
@@ -619,6 +631,7 @@ public class TieController {
                     BorderStrokeStyle.SOLID,
                     new CornerRadii(0),
                     new BorderWidths(3))));
+            button.setText("S");
         }
     }
 
@@ -638,6 +651,8 @@ public class TieController {
                     BorderStrokeStyle.SOLID,
                     new CornerRadii(0),
                     new BorderWidths(3))));
+            button.setText("E");
+
         }
     }
 
