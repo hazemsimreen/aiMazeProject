@@ -56,7 +56,7 @@ public class GridController {
                 return;
             }
 
-            mainPane.setPrefSize(500, 550); // Set preferred size for main pane
+            mainPane.setPrefSize(560, 550); // Set preferred size for main pane
 
             GridPane grid = new GridPane();
             grid.setPrefSize(500, 500);
@@ -127,22 +127,10 @@ public class GridController {
                 rightLabels.getChildren().add(rightLabel);
             }
 
-            HBox controlButtons = new HBox(20);
-            controlButtons.setPadding(new Insets(10));
-            controlButtons.setAlignment(Pos.CENTER);
-
-            Button randomizeButton = new Button("Randomize Tiles");
-            randomizeButton.setOnAction(this::randomizeTiles);
-
-            Button runSearchButton = new Button("Run Search");
-            runSearchButton.setOnAction(this::runSearch);
-
-            controlButtons.getChildren().addAll(randomizeButton, runSearchButton);
 
             // Populate mainPane
             mainPane.setTop(topLabels);
             mainPane.setCenter(grid);
-            mainPane.setBottom(new VBox(bottomLabels, controlButtons));
             mainPane.setLeft(leftLabels);
             mainPane.setRight(rightLabels);
 
@@ -260,6 +248,7 @@ public class GridController {
         return label;
     }
 
+    @FXML
     private void runSearch(ActionEvent event) {
         // Get the grid from mainPane's center
         GridPane grid = getGridFromMainPane();
