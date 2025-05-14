@@ -36,6 +36,8 @@ public class GridController {
     private int rowsCount;
     private int columnsCount;
 
+    String baseStyle;
+
     @FXML
     public void initialize() {
         perceptron = Util.trainPerceptronUsingInputData();
@@ -60,7 +62,9 @@ public class GridController {
 
             double tileWidth = 500.0 / columns;
             double tileHeight = 500.0 / rows;
-            double fontSize = Math.min(tileWidth, tileHeight) * 0.2;
+            // More dynamic font size calculation based on both width and height
+            double fontSize = Math.min(tileWidth, tileHeight) * 0.4; // Increased multiplier for better visibility
+            fontSize = Math.max(8, Math.min(fontSize, 24)); // Set min and max bounds for font size
 
             grid.getColumnConstraints().clear();
             grid.getRowConstraints().clear();
@@ -83,6 +87,11 @@ public class GridController {
                     button.setMinSize(0, 0);
                     button.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
 
+                    // Store the base style with font size separately
+                    baseStyle = String.format("-fx-font-size: %.2fpx;", fontSize);
+                    button.getProperties().put("baseStyle", baseStyle);
+                    button.setStyle(baseStyle);
+
                     grid.add(button, col, row);
                     GridPane.setHgrow(button, Priority.ALWAYS);
                     GridPane.setVgrow(button, Priority.ALWAYS);
@@ -103,7 +112,7 @@ public class GridController {
     @FXML
     private void randomizeTiles(ActionEvent event) {
 
-//if a search is running, stop it
+        //if a search is running, stop it
         stopCurrentSearch();
 
         // Get the grid from mainPane's center
@@ -156,17 +165,17 @@ public class GridController {
                 // Apply the random terrain style
                 switch (randomTerrain) {
                     case "Grass":
-                        button.setStyle("-fx-background-color: mediumseagreen;");
+                        button.setStyle(baseStyle + " -fx-background-color: mediumseagreen;");
                         // Only add to eligible list if elevation > 0
                         if (randomElevation > 0) {
                             eligibleGrassTiles.add(button);
                         }
                         break;
                     case "Water":
-                        button.setStyle("-fx-background-color: aqua;");
+                        button.setStyle(baseStyle + " -fx-background-color: aqua;");
                         break;
                     case "Obstacle":
-                        button.setStyle("-fx-background-color: dimgray;");
+                        button.setStyle(baseStyle + " -fx-background-color: dimgray;");
                         break;
                 }
 
@@ -249,11 +258,10 @@ public class GridController {
                 if (finalPath != null && !finalPath.isEmpty()) {
                     // Animate the final path one tile at a time
                     animateFinalPath(finalGrid, finalPath, 0);
-                    
-                } 
-                //Make sure it won't run when we stop search (since we also return null)
+
+                } //Make sure it won't run when we stop search (since we also return null)
                 else if (!stopSearch) {
-                    
+
                     JOptionPane.showMessageDialog(null,
                             "No safe path found from start to end!",
                             "No Path Found",
@@ -283,7 +291,7 @@ public class GridController {
         Platform.runLater(() -> {
             Button button = Util.getButtonAt(grid, startNode.x, startNode.y);
             if (button != null) {
-                button.setStyle("-fx-background-color: red;");
+                button.setStyle(baseStyle + " -fx-background-color: red;");
             }
         });
 
@@ -301,7 +309,7 @@ public class GridController {
             Platform.runLater(() -> {
                 Button button = Util.getButtonAt(grid, currentNode.x, currentNode.y);
                 if (button != null && !button.equals(currentStartingPoint) && !button.equals(currentEndingPoint)) {
-                    button.setStyle("-fx-background-color: lightcoral;");
+                    button.setStyle(baseStyle + " -fx-background-color: lightcoral;");
                 }
             });
 
@@ -317,7 +325,7 @@ public class GridController {
             if (currentNode.equals(endNode)) {
                 Button button = Util.getButtonAt(grid, currentNode.x, currentNode.y);
                 if (button != null) {
-                    button.setStyle("-fx-background-color: orange;");
+                    button.setStyle(baseStyle + " -fx-background-color: orange;");
                 }
                 return reconstructPath(currentNode);
             }
@@ -363,7 +371,7 @@ public class GridController {
         AStarNode node = path.get(index);
         Button button = Util.getButtonAt(grid, node.x, node.y);
         if (button != null && !button.equals(currentStartingPoint) && !button.equals(currentEndingPoint)) {
-            button.setStyle("-fx-background-color: lime;");
+            button.setStyle(baseStyle + " -fx-background-color: lime;");
         }
 
         // Schedule the next animation step after a delay

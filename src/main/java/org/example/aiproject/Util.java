@@ -29,8 +29,8 @@ public class Util {
      * Gets the Button at the specified row and column indices in the GridPane.
      *
      * @param grid The GridPane to search within.
-     * @param x    The column index.
-     * @param y    The row index.
+     * @param x The column index.
+     * @param y The row index.
      * @return The Button at the specified coordinates, or null if not found.
      */
     public static Button getButtonAt(GridPane grid, int x, int y) {
@@ -45,17 +45,19 @@ public class Util {
     }
 
     /**
-     * Resets the background color of all buttons in the grid based on their stored terrain type.
+     * Resets the background color of all buttons in the grid based on their
+     * stored terrain type.
      *
-     * @param grid              The GridPane to process.
+     * @param grid The GridPane to process.
      * @param currentStartingPoint The current starting point button.
-     * @param currentEndingPoint   The current ending point button.
+     * @param currentEndingPoint The current ending point button.
      */
     public static void resetGridColors(GridPane grid, Button currentStartingPoint, Button currentEndingPoint) {
         for (Node node : grid.getChildren()) {
             if (node instanceof Button) {
                 Button button = (Button) node;
                 String terrainType = (String) button.getProperties().get("terrainType");
+                String baseStyle = (String) button.getProperties().get("baseStyle");
 
                 // Don't reset special points or obstacles/water
                 if (button.equals(currentStartingPoint) || button.equals(currentEndingPoint)) {
@@ -63,11 +65,11 @@ public class Util {
                 }
 
                 if ("Grass".equals(terrainType)) {
-                    button.setStyle("-fx-background-color: mediumseagreen;");
+                    button.setStyle(baseStyle + " -fx-background-color: mediumseagreen;");
                 } else if ("Water".equals(terrainType)) {
-                    button.setStyle("-fx-background-color: aqua;");
+                    button.setStyle(baseStyle + " -fx-background-color: aqua;");
                 } else if ("Obstacle".equals(terrainType)) {
-                    button.setStyle("-fx-background-color: dimgray;");
+                    button.setStyle(baseStyle + " -fx-background-color: dimgray;");
                 }
             }
         }
@@ -83,7 +85,7 @@ public class Util {
     public static double manhattanDistance(GridController.AStarNode a, GridController.AStarNode b) {
         return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
     }
-    
+
     public static Perceptron trainPerceptronUsingInputData() {
         String fileName = "data.txt";
         List<double[]> inputList = new ArrayList<>();

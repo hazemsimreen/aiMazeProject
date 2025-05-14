@@ -69,6 +69,8 @@ public class ComboBoxController {
 
                 targetButton.setText(String.valueOf(value));
 
+                String baseStyle = (String) targetButton.getProperties().get("baseStyle");
+
                 // Handle starting/ending point selection
                 if (startingPointRadioButton.isSelected()) {
                     if (selectedItem != null && !selectedItem.equals("Grass")) {
@@ -116,13 +118,13 @@ public class ComboBoxController {
                 // Set the button color based on terrain type
                 switch (selectedItem) {
                     case "Grass":
-                        targetButton.setStyle("-fx-background-color: mediumseagreen;");
+                        targetButton.setStyle(baseStyle + " -fx-background-color: mediumseagreen;");
                         break;
                     case "Water":
-                        targetButton.setStyle("-fx-background-color: aqua;");
+                        targetButton.setStyle(baseStyle + " -fx-background-color: aqua;");
                         break;
                     case "Obstacle":
-                        targetButton.setStyle("-fx-background-color: dimgray;");
+                        targetButton.setStyle(baseStyle + " -fx-background-color: dimgray;");
                         break;
                 }
             }
