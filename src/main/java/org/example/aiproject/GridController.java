@@ -10,21 +10,20 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.PriorityQueue;
 import javafx.application.Platform;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
+
 import javafx.scene.paint.Color;
 import javax.swing.JOptionPane;
 
 public class GridController {
+
+    //for stopping the search when we press randomize tiles
+    private volatile boolean stopSearch = false;
 
     private Button currentStartingPoint = null;
     private Button currentEndingPoint = null;
@@ -103,6 +102,10 @@ public class GridController {
 
     @FXML
     private void randomizeTiles(ActionEvent event) {
+
+//if a search is running, stop it
+        stopCurrentSearch();
+
         // Get the grid from mainPane's center
         GridPane grid = Util.getGridFromMainPane(mainPane);
 
@@ -246,7 +249,11 @@ public class GridController {
                 if (finalPath != null && !finalPath.isEmpty()) {
                     // Animate the final path one tile at a time
                     animateFinalPath(finalGrid, finalPath, 0);
-                } else {
+                    
+                } 
+                //Make sure it won't run when we stop search (since we also return null)
+                else if (!stopSearch) {
+                    
                     JOptionPane.showMessageDialog(null,
                             "No safe path found from start to end!",
                             "No Path Found",
@@ -257,6 +264,10 @@ public class GridController {
     }
 
     private List<AStarNode> aStarSearch(GridPane grid, int startX, int startY, int endX, int endY, List<AStarNode> testedPath) {
+
+        //flag a new search operation
+        stopSearch = false;
+
         // Create open and closed lists
         PriorityQueue<AStarNode> openList = new PriorityQueue<>();
         List<AStarNode> closedList = new ArrayList<>();
@@ -277,6 +288,11 @@ public class GridController {
         });
 
         while (!openList.isEmpty()) {
+
+            if (stopSearch) {
+                return null;
+            }
+
             // Get the node with the lowest f cost
             AStarNode currentNode = openList.poll();
             testedPath.add(currentNode);
@@ -549,4 +565,19 @@ public class GridController {
         //run here, since its set after rows
         createGrid();
     }
+
+    private void stopCurrentSearch() {
+        stopSearch = true;
+        // Reset the flag after a short delay to allow new searches
+        new java.util.Timer().schedule(
+                new java.util.TimerTask() {
+            @Override
+            public void run() {
+                stopSearch = false;
+            }
+        },
+                600
+        );
+    }
+
 }
