@@ -67,6 +67,8 @@ public class ComboBoxController {
                 targetButton.getProperties().put("terrainType", selectedItem);
                 targetButton.getProperties().put("elevation", value);
 
+                targetButton.setText(String.valueOf(value));
+
                 // Handle starting/ending point selection
                 if (startingPointRadioButton.isSelected()) {
                     if (selectedItem != null && !selectedItem.equals("Grass")) {
@@ -124,8 +126,6 @@ public class ComboBoxController {
                         break;
                 }
             }
-
-            targetButton.setText(String.valueOf(value));
 
             ((Button) event.getSource()).getScene().getWindow().hide();
 

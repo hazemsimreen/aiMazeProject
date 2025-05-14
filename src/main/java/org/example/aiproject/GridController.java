@@ -48,7 +48,6 @@ public class GridController {
             int rows = rowsCount;
             int columns = columnsCount;
 
-
             if (mainPane == null) {
                 System.err.println("Error: mainPane is null");
                 return;
@@ -501,6 +500,7 @@ public class GridController {
         // Clear previous starting point if exists
         if (currentStartingPoint != null) {
             currentStartingPoint.getProperties().put("isStartingPoint", false);
+            currentStartingPoint.setText(currentStartingPoint.getProperties().get("elevation").toString());
             currentStartingPoint.setBorder(null);
         }
 
@@ -521,6 +521,7 @@ public class GridController {
         // Clear previous ending point if exists
         if (currentEndingPoint != null) {
             currentEndingPoint.getProperties().put("isEndingPoint", false);
+            currentEndingPoint.setText(currentEndingPoint.getProperties().get("elevation").toString());
             currentEndingPoint.setBorder(null);
         }
 
@@ -538,7 +539,6 @@ public class GridController {
         }
     }
 
-    
     public void setRowsCount(int rowsCount) {
         this.rowsCount = rowsCount;
     }
