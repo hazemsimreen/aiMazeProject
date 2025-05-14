@@ -94,44 +94,7 @@ public class GridController {
                 }
             }
 
-            HBox topLabels = new HBox();
-            topLabels.setPrefHeight(fontSize * 2);
-            HBox bottomLabels = new HBox();
-            bottomLabels.setPrefHeight(fontSize * 2);
-
-            for (int col = 0; col < columns; col++) {
-                Label topLabel = createCoordinateLabel(String.valueOf(col), fontSize);
-                Label bottomLabel = createCoordinateLabel(String.valueOf(col), fontSize);
-
-                topLabel.setPrefWidth(tileWidth);
-                bottomLabel.setPrefWidth(tileWidth);
-
-                topLabels.getChildren().add(topLabel);
-                bottomLabels.getChildren().add(bottomLabel);
-            }
-
-            VBox leftLabels = new VBox();
-            leftLabels.setPrefWidth(fontSize * 2);
-            VBox rightLabels = new VBox();
-            rightLabels.setPrefWidth(fontSize * 2);
-            rightLabels.setPadding(new Insets(5, 5, 5, 10));
-
-            for (int row = 0; row < rows; row++) {
-                Label leftLabel = createCoordinateLabel(String.valueOf(row), fontSize);
-                Label rightLabel = createCoordinateLabel(String.valueOf(row), fontSize);
-
-                leftLabel.setPrefHeight(tileHeight);
-                rightLabel.setPrefHeight(tileHeight);
-
-                leftLabels.getChildren().add(leftLabel);
-                rightLabels.getChildren().add(rightLabel);
-            }
-
-            // Populate mainPane
-            mainPane.setTop(topLabels);
             mainPane.setCenter(grid);
-            mainPane.setLeft(leftLabels);
-            mainPane.setRight(rightLabels);
 
         } catch (NumberFormatException e) {
             Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -242,12 +205,6 @@ public class GridController {
                     "No eligible grass tiles available",
                     JOptionPane.WARNING_MESSAGE);
         }
-    }
-
-    private Label createCoordinateLabel(String text, double fontSize) {
-        Label label = new Label(text);
-        label.setStyle("-fx-font-size: " + fontSize + "px; -fx-alignment: center;");
-        return label;
     }
 
     @FXML
