@@ -107,7 +107,7 @@ public class GridController {
     @FXML
     private void randomizeTiles(ActionEvent event) {
         // Get the grid from mainPane's center
-        GridPane grid = getGridFromMainPane();
+        GridPane grid = Util.getGridFromMainPane(mainPane);
 
         if (grid == null) {
             JOptionPane.showMessageDialog(null,
@@ -210,7 +210,7 @@ public class GridController {
     @FXML
     private void runSearch(ActionEvent event) {
         // Get the grid from mainPane's center
-        GridPane grid = getGridFromMainPane();
+        GridPane grid = Util.getGridFromMainPane(mainPane);
 
         if (grid == null) {
             JOptionPane.showMessageDialog(null,
@@ -237,7 +237,7 @@ public class GridController {
         final GridPane finalGrid = grid;
 
         // Reset all tile colors (except obstacles, water, and special points)
-        resetGridColors(grid);
+        Util.resetGridColors(grid, currentStartingPoint, currentEndingPoint);
 
         // Create a new thread for the search to allow for animation
         new Thread(() -> {
@@ -259,14 +259,6 @@ public class GridController {
         }).start();
     }
 
-    // Helper method to get the grid from mainPane
-    private GridPane getGridFromMainPane() {
-        if (mainPane != null && mainPane.getCenter() instanceof GridPane) {
-            return (GridPane) mainPane.getCenter();
-        }
-        return null;
-    }
-
     private List<AStarNode> aStarSearch(GridPane grid, int startX, int startY, int endX, int endY, List<AStarNode> testedPath) {
         // Create open and closed lists
         PriorityQueue<AStarNode> openList = new PriorityQueue<>();
@@ -281,7 +273,7 @@ public class GridController {
 
         //mark starting node as visited (via filling it)
         Platform.runLater(() -> {
-            Button button = getButtonAt(grid, startNode.x, startNode.y);
+            Button button = Util.getButtonAt(grid, startNode.x, startNode.y);
             if (button != null) {
                 button.setStyle("-fx-background-color: red;");
             }
@@ -294,7 +286,7 @@ public class GridController {
 
             // Update the UI to show the tested node
             Platform.runLater(() -> {
-                Button button = getButtonAt(grid, currentNode.x, currentNode.y);
+                Button button = Util.getButtonAt(grid, currentNode.x, currentNode.y);
                 if (button != null && !button.equals(currentStartingPoint) && !button.equals(currentEndingPoint)) {
                     button.setStyle("-fx-background-color: lightcoral;");
                 }
@@ -310,7 +302,7 @@ public class GridController {
 
             // Check if we've reached the end
             if (currentNode.equals(endNode)) {
-                Button button = getButtonAt(grid, currentNode.x, currentNode.y);
+                Button button = Util.getButtonAt(grid, currentNode.x, currentNode.y);
                 if (button != null) {
                     button.setStyle("-fx-background-color: orange;");
                 }
@@ -333,7 +325,7 @@ public class GridController {
                 if (!openList.contains(neighbor) || tentativeGScore < neighbor.g) {
                     neighbor.parent = currentNode;
                     neighbor.g = tentativeGScore;
-                    neighbor.h = manhattanDistance(neighbor, endNode);
+                    neighbor.h = Util.manhattanDistance(neighbor, endNode);
                     neighbor.f = neighbor.g + neighbor.h;
 
                     if (!openList.contains(neighbor)) {
@@ -356,7 +348,7 @@ public class GridController {
         }
 
         AStarNode node = path.get(index);
-        Button button = getButtonAt(grid, node.x, node.y);
+        Button button = Util.getButtonAt(grid, node.x, node.y);
         if (button != null && !button.equals(currentStartingPoint) && !button.equals(currentEndingPoint)) {
             button.setStyle("-fx-background-color: lime;");
         }
@@ -373,39 +365,6 @@ public class GridController {
         },
                 300 // 300ms delay between path segments
         );
-    }
-
-    private void resetGridColors(GridPane grid) {
-        for (Node node : grid.getChildren()) {
-            if (node instanceof Button) {
-                Button button = (Button) node;
-                String terrainType = (String) button.getProperties().get("terrainType");
-
-                // Don't reset special points or obstacles/water
-                if (button.equals(currentStartingPoint) || button.equals(currentEndingPoint)) {
-                    continue;
-                }
-
-                if ("Grass".equals(terrainType)) {
-                    button.setStyle("-fx-background-color: mediumseagreen;");
-                } else if ("Water".equals(terrainType)) {
-                    button.setStyle("-fx-background-color: aqua;");
-                } else if ("Obstacle".equals(terrainType)) {
-                    button.setStyle("-fx-background-color: dimgray;");
-                }
-            }
-        }
-    }
-
-    private Button getButtonAt(GridPane grid, int x, int y) {
-        for (Node node : grid.getChildren()) {
-            Integer colIndex = GridPane.getColumnIndex(node);
-            Integer rowIndex = GridPane.getRowIndex(node);
-            if (colIndex != null && rowIndex != null && colIndex == x && rowIndex == y) {
-                return (Button) node;
-            }
-        }
-        return null;
     }
 
     private List<AStarNode> getNeighbors(GridPane grid, AStarNode node) {
@@ -426,7 +385,7 @@ public class GridController {
     }
 
     private boolean isTileSafe(GridPane grid, int x, int y) {
-        Button button = getButtonAt(grid, x, y);
+        Button button = Util.getButtonAt(grid, x, y);
         if (button == null) {
             return false;
         }
@@ -457,7 +416,7 @@ public class GridController {
                 if ("Obstacle".equals(button.getProperties().get("terrainType"))) {
                     int obstacleX = GridPane.getColumnIndex(button);
                     int obstacleY = GridPane.getRowIndex(button);
-                    int distance = (int) manhattanDistance(new AStarNode(x, y), new AStarNode(obstacleX, obstacleY));
+                    int distance = (int) Util.manhattanDistance(new AStarNode(x, y), new AStarNode(obstacleX, obstacleY));
                     if (distance < minDistance) {
                         minDistance = distance;
                     }
@@ -466,10 +425,6 @@ public class GridController {
         }
 
         return minDistance == Integer.MAX_VALUE ? 10 : minDistance; // Default to 10 if no obstacles
-    }
-
-    private double manhattanDistance(AStarNode a, AStarNode b) {
-        return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
     }
 
     private List<AStarNode> reconstructPath(AStarNode endNode) {
@@ -485,7 +440,7 @@ public class GridController {
     }
 
 // Renamed Node class to AStarNode
-    private static class AStarNode implements Comparable<AStarNode> {
+    public static class AStarNode implements Comparable<AStarNode> {
 
         int x, y;
         double f = 0, g = 0, h = 0;
