@@ -38,8 +38,8 @@ public class InputGridController {
             gridController.setRowsCount(rows);
             gridController.setColumnsCount(columns);
 
-            // Show the new scene with size 500x600
-            Scene scene = new Scene(root, 560, 660);
+            // Show the new scene with size 500x700
+            Scene scene = new Scene(root, 560, 700);
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
             stage.setScene(scene);
 
