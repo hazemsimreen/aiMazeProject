@@ -39,20 +39,18 @@ public class GridController {
 
     @FXML
     public void initialize() {
-        trainPerceptronUsingInputData();
+        perceptron = Util.trainPerceptronUsingInputData();
     }
 
     @FXML
     public void createGrid() {
-        System.out.println("createGrid() method called");
         try {
             int rows = rowsCount;
             int columns = columnsCount;
 
-            System.out.println("Creating grid with " + rows + " rows and " + columns + " columns");
 
             if (mainPane == null) {
-                System.err.println("Error: mainPane is null. Ensure it's properly injected via @FXML.");
+                System.err.println("Error: mainPane is null");
                 return;
             }
 
@@ -540,39 +538,7 @@ public class GridController {
         }
     }
 
-    private void trainPerceptronUsingInputData() {
-        String fileName = "data.txt";
-        List<double[]> inputList = new ArrayList<>();
-        List<Double> labelList = new ArrayList<>();
-
-        try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                String[] tokens = line.trim().split("\\s+");
-                if (tokens.length == 4) {
-                    double[] inputs = new double[3];
-                    for (int i = 0; i < 3; i++) {
-                        inputs[i] = Double.parseDouble(tokens[i]);
-                    }
-                    double label = Double.parseDouble(tokens[3]);
-                    inputList.add(inputs);
-                    labelList.add(label);
-                }
-            }
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(null,
-                    "Error reading training data file: " + e.getMessage(),
-                    "File Error",
-                    JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-        double[][] inputArray = inputList.toArray(new double[0][]);
-        double[] labelArray = labelList.stream().mapToDouble(Double::doubleValue).toArray();
-
-        perceptron = new Perceptron(3);
-        perceptron.train(inputArray, labelArray, 20);
-    }
-
+    
     public void setRowsCount(int rowsCount) {
         this.rowsCount = rowsCount;
     }
@@ -583,5 +549,4 @@ public class GridController {
         //run here, since its set after rows
         createGrid();
     }
-
 }

@@ -1,8 +1,14 @@
 package org.example.aiproject;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.layout.GridPane;
+import javax.swing.JOptionPane;
 
 public class Util {
 
@@ -77,4 +83,39 @@ public class Util {
     public static double manhattanDistance(GridController.AStarNode a, GridController.AStarNode b) {
         return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
     }
+    
+    public static Perceptron trainPerceptronUsingInputData() {
+        String fileName = "data.txt";
+        List<double[]> inputList = new ArrayList<>();
+        List<Double> labelList = new ArrayList<>();
+
+        try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] tokens = line.trim().split("\\s+");
+                if (tokens.length == 4) {
+                    double[] inputs = new double[3];
+                    for (int i = 0; i < 3; i++) {
+                        inputs[i] = Double.parseDouble(tokens[i]);
+                    }
+                    double label = Double.parseDouble(tokens[3]);
+                    inputList.add(inputs);
+                    labelList.add(label);
+                }
+            }
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(null,
+                    "Error reading training data file: " + e.getMessage(),
+                    "File Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return null;
+        }
+        double[][] inputArray = inputList.toArray(new double[0][]);
+        double[] labelArray = labelList.stream().mapToDouble(Double::doubleValue).toArray();
+
+        Perceptron perceptron = new Perceptron(3);
+        perceptron.train(inputArray, labelArray, 20);
+        return perceptron;
+    }
+
 }
