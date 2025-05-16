@@ -42,14 +42,8 @@ public class InputGridController {
             Scene scene = new Scene(root, 560, 700);
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
             stage.setScene(scene);
-
-            // Center the stage on the screen
             stage.centerOnScreen();
-
             stage.show();
-
-            // Close the current stage
-            ((Node) event.getSource()).getScene().getWindow().hide();
 
         } catch (NumberFormatException e) {
             JOptionPane.showMessageDialog(null, "Please enter valid integer values for rows and columns.", "Invalid Input", JOptionPane.ERROR_MESSAGE);
@@ -58,5 +52,4 @@ public class InputGridController {
             e.printStackTrace();
         }
     }
-
 }
