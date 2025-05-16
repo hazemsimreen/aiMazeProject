@@ -7,12 +7,6 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.TextField;
-import javafx.scene.paint.Color;
-import javafx.scene.layout.Border;
-import javafx.scene.layout.BorderStroke;
-import javafx.scene.layout.BorderStrokeStyle;
-import javafx.scene.layout.BorderWidths;
-import javafx.scene.layout.CornerRadii;
 import javax.swing.JOptionPane;
 
 public class ComboBoxController {
@@ -67,6 +61,10 @@ public class ComboBoxController {
                 targetButton.getProperties().put("terrainType", selectedItem);
                 targetButton.getProperties().put("elevation", value);
 
+                targetButton.setText(String.valueOf(value));
+
+                String baseStyle = (String) targetButton.getProperties().get("baseStyle");
+
                 // Handle starting/ending point selection
                 if (startingPointRadioButton.isSelected()) {
                     if (selectedItem != null && !selectedItem.equals("Grass")) {
@@ -100,18 +98,16 @@ public class ComboBoxController {
                 // Set the button color based on terrain type
                 switch (selectedItem) {
                     case "Grass":
-                        targetButton.setStyle("-fx-background-color: mediumseagreen;");
+                        targetButton.setStyle(baseStyle + " -fx-background-color: mediumseagreen;");
                         break;
                     case "Water":
-                        targetButton.setStyle("-fx-background-color: aqua;");
+                        targetButton.setStyle(baseStyle + " -fx-background-color: aqua;");
                         break;
                     case "Obstacle":
-                        targetButton.setStyle("-fx-background-color: dimgray;");
+                        targetButton.setStyle(baseStyle + " -fx-background-color: dimgray;");
                         break;
                 }
             }
-
-            targetButton.setText(String.valueOf(value));
 
             ((Button) event.getSource()).getScene().getWindow().hide();
 

@@ -6,10 +6,11 @@ public class Perceptron {
 
     private double[] weights;
     private double threshold;
-    private double learningRate = 0.1;
+    private double learningRate;
 
-    public Perceptron(int inputSize) {
+    public Perceptron(int inputSize, double learningRate) {
         weights = new double[inputSize];
+        this.learningRate = learningRate;
         Random rand = new Random();
         for (int i = 0; i < inputSize; i++) {
             weights[i] = rand.nextDouble() - 0.5;
@@ -27,14 +28,21 @@ public class Perceptron {
 
     public void train(double[][] inputSamples, double[] labels, int epochs) {
         for (int epoch = 0; epoch < epochs; epoch++) {
+            int errors = 0;
             for (int i = 0; i < inputSamples.length; i++) {
                 int prediction = predict(inputSamples[i]);
                 double error = labels[i] - prediction;
+                if (error != 0) {
+                    errors++;
+                }
 
                 for (int j = 0; j < weights.length; j++) {
                     weights[j] += learningRate * error * inputSamples[i][j];
                 }
-                threshold  += learningRate * error;
+                threshold += learningRate * error;
+            }
+            if (errors == 0) {
+                break; // Early stopping
             }
 
         }

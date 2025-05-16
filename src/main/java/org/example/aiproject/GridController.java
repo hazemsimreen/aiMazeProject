@@ -10,21 +10,20 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.PriorityQueue;
 import javafx.application.Platform;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
+
 import javafx.scene.paint.Color;
 import javax.swing.JOptionPane;
 
 public class GridController {
+
+    //for stopping the search when we press randomize tiles
+    private volatile boolean stopSearch = false;
 
     private Button currentStartingPoint = null;
     private Button currentEndingPoint = null;
@@ -37,22 +36,26 @@ public class GridController {
     private int rowsCount;
     private int columnsCount;
 
+    String baseStyle;
+
+    @FXML
+    Label accuracyLabel;
+
     @FXML
     public void initialize() {
-        trainPerceptronUsingInputData();
+        perceptron = (Perceptron) Util.trainPerceptronUsingInputData().get("perceptron");
+        Double accuracy = (Double) Util.trainPerceptronUsingInputData().get("accuracy");
+        accuracyLabel.setText("The accuracy of our training was " + String.valueOf(accuracy) + "%");
     }
 
     @FXML
     public void createGrid() {
-        System.out.println("createGrid() method called");
         try {
             int rows = rowsCount;
             int columns = columnsCount;
 
-            System.out.println("Creating grid with " + rows + " rows and " + columns + " columns");
-
             if (mainPane == null) {
-                System.err.println("Error: mainPane is null. Ensure it's properly injected via @FXML.");
+                System.err.println("Error: mainPane is null");
                 return;
             }
 
@@ -64,7 +67,9 @@ public class GridController {
 
             double tileWidth = 500.0 / columns;
             double tileHeight = 500.0 / rows;
-            double fontSize = Math.min(tileWidth, tileHeight) * 0.2;
+            // More dynamic font size calculation based on both width and height
+            double fontSize = Math.min(tileWidth, tileHeight) * 0.4; // Increased multiplier for better visibility
+            fontSize = Math.max(8, Math.min(fontSize, 24)); // Set min and max bounds for font size
 
             grid.getColumnConstraints().clear();
             grid.getRowConstraints().clear();
@@ -87,6 +92,11 @@ public class GridController {
                     button.setMinSize(0, 0);
                     button.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
 
+                    // Store the base style with font size separately
+                    baseStyle = String.format("-fx-font-size: %.2fpx;", fontSize);
+                    button.getProperties().put("baseStyle", baseStyle);
+                    button.setStyle(baseStyle);
+
                     grid.add(button, col, row);
                     GridPane.setHgrow(button, Priority.ALWAYS);
                     GridPane.setVgrow(button, Priority.ALWAYS);
@@ -94,45 +104,7 @@ public class GridController {
                 }
             }
 
-            HBox topLabels = new HBox();
-            topLabels.setPrefHeight(fontSize * 2);
-            HBox bottomLabels = new HBox();
-            bottomLabels.setPrefHeight(fontSize * 2);
-
-            for (int col = 0; col < columns; col++) {
-                Label topLabel = createCoordinateLabel(String.valueOf(col), fontSize);
-                Label bottomLabel = createCoordinateLabel(String.valueOf(col), fontSize);
-
-                topLabel.setPrefWidth(tileWidth);
-                bottomLabel.setPrefWidth(tileWidth);
-
-                topLabels.getChildren().add(topLabel);
-                bottomLabels.getChildren().add(bottomLabel);
-            }
-
-            VBox leftLabels = new VBox();
-            leftLabels.setPrefWidth(fontSize * 2);
-            VBox rightLabels = new VBox();
-            rightLabels.setPrefWidth(fontSize * 2);
-            rightLabels.setPadding(new Insets(5, 5, 5, 10));
-
-            for (int row = 0; row < rows; row++) {
-                Label leftLabel = createCoordinateLabel(String.valueOf(row), fontSize);
-                Label rightLabel = createCoordinateLabel(String.valueOf(row), fontSize);
-
-                leftLabel.setPrefHeight(tileHeight);
-                rightLabel.setPrefHeight(tileHeight);
-
-                leftLabels.getChildren().add(leftLabel);
-                rightLabels.getChildren().add(rightLabel);
-            }
-
-
-            // Populate mainPane
-            mainPane.setTop(topLabels);
             mainPane.setCenter(grid);
-            mainPane.setLeft(leftLabels);
-            mainPane.setRight(rightLabels);
 
         } catch (NumberFormatException e) {
             Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -144,8 +116,11 @@ public class GridController {
 
     @FXML
     private void randomizeTiles(ActionEvent event) {
+        //if a search is running, stop it
+        stopCurrentSearch();
+
         // Get the grid from mainPane's center
-        GridPane grid = getGridFromMainPane();
+        GridPane grid = Util.getGridFromMainPane(mainPane);
 
         if (grid == null) {
             JOptionPane.showMessageDialog(null,
@@ -167,8 +142,8 @@ public class GridController {
             currentEndingPoint = null;
         }
 
-        // First collect all grass tiles
-        List<Button> grassTiles = new ArrayList<>();
+        // First collect all safe grass tiles with elevation > 0
+        List<Button> eligibleSafeTiles = new ArrayList<>();
 
         // Get all buttons from the grid and randomize their properties
         for (Node node : grid.getChildren()) {
@@ -194,14 +169,13 @@ public class GridController {
                 // Apply the random terrain style
                 switch (randomTerrain) {
                     case "Grass":
-                        button.setStyle("-fx-background-color: mediumseagreen;");
-                        grassTiles.add(button); // Add to grass tiles list
+                        button.setStyle(baseStyle + " -fx-background-color: mediumseagreen;");
                         break;
                     case "Water":
-                        button.setStyle("-fx-background-color: aqua;");
+                        button.setStyle(baseStyle + " -fx-background-color: aqua;");
                         break;
                     case "Obstacle":
-                        button.setStyle("-fx-background-color: dimgray;");
+                        button.setStyle(baseStyle + " -fx-background-color: dimgray;");
                         break;
                 }
 
@@ -210,48 +184,78 @@ public class GridController {
                 button.getProperties().put("elevation", randomElevation);
 
                 button.setText(String.valueOf(randomElevation));
+
+                // Check if tile is safe and grass with elevation > 0
+                int x = GridPane.getColumnIndex(button);
+                int y = GridPane.getRowIndex(button);
+                if ("Grass".equals(randomTerrain) && randomElevation > 0 && isTileSafe(grid, x, y)) {
+                    eligibleSafeTiles.add(button);
+                }
             }
         }
 
-        // Set random starting and ending points (must be on grass and different tiles)
-        if (grassTiles.size() >= 2) {
-            // Random starting point
-            int startIndex = (int) (Math.random() * grassTiles.size());
-            Button startButton = grassTiles.get(startIndex);
-            setStartingPoint(startButton);
+        // Set random starting and ending points (must be on safe grass with elevation > 0 and different tiles)
+        if (eligibleSafeTiles.size() >= 2) {
+            // Keep trying to find valid points until we get safe ones
+            boolean validPointsSet = false;
+            int attempts = 0;
+            final int MAX_ATTEMPTS = 10; // Prevent infinite loops
 
-            // Remove starting point from available grass tiles
-            grassTiles.remove(startIndex);
+            while (!validPointsSet && attempts < MAX_ATTEMPTS) {
+                attempts++;
 
-            // Random ending point (from remaining grass tiles)
-            int endIndex = (int) (Math.random() * grassTiles.size());
-            Button endButton = grassTiles.get(endIndex);
-            setEndingPoint(endButton);
-        } else if (grassTiles.size() == 1) {
-            // Only one grass tile - set it as starting point
-            setStartingPoint(grassTiles.get(0));
-            JOptionPane.showMessageDialog(null,
-                    "Could only set starting point. Add more grass tiles to set an ending point.",
-                    "Only one grass tile available",
-                    JOptionPane.WARNING_MESSAGE);
+                // Random starting point
+                int startIndex = (int) (Math.random() * eligibleSafeTiles.size());
+                Button startButton = eligibleSafeTiles.get(startIndex);
+
+                // Remove starting point from available tiles
+                List<Button> remainingTiles = new ArrayList<>(eligibleSafeTiles);
+                remainingTiles.remove(startIndex);
+
+                if (!remainingTiles.isEmpty()) {
+                    // Random ending point (from remaining tiles)
+                    int endIndex = (int) (Math.random() * remainingTiles.size());
+                    Button endButton = remainingTiles.get(endIndex);
+
+                    // Verify both points are safe (should be true since we pre-filtered)
+                    if (isTileSafe(grid, GridPane.getColumnIndex(startButton), GridPane.getRowIndex(startButton))
+                            && isTileSafe(grid, GridPane.getColumnIndex(endButton), GridPane.getRowIndex(endButton))) {
+
+                        setStartingPoint(startButton);
+                        setEndingPoint(endButton);
+                        validPointsSet = true;
+                    }
+                }
+            }
+
+            if (!validPointsSet) {
+                JOptionPane.showMessageDialog(null,
+                        "Failed to find safe starting and ending points after multiple attempts.",
+                        "No Safe Points Found",
+                        JOptionPane.WARNING_MESSAGE);
+            }
+        } else if (eligibleSafeTiles.size() == 1) {
+            // Only one eligible safe tile - set it as starting point if safe
+            Button startButton = eligibleSafeTiles.get(0);
+            if (isTileSafe(grid, GridPane.getColumnIndex(startButton), GridPane.getRowIndex(startButton))) {
+                setStartingPoint(startButton);
+                JOptionPane.showMessageDialog(null,
+                        "Could only set starting point. Add more safe grass tiles with elevation > 0 to set an ending point.",
+                        "Only one eligible safe tile available",
+                        JOptionPane.WARNING_MESSAGE);
+            }
         } else {
             JOptionPane.showMessageDialog(null,
-                    "Could not set starting or ending points. Add some grass tiles first.",
-                    "No grass tiles available",
+                    "Could not set starting or ending points. Add some safe grass tiles with elevation > 0 first.",
+                    "No eligible safe tiles available",
                     JOptionPane.WARNING_MESSAGE);
         }
-    }
-
-    private Label createCoordinateLabel(String text, double fontSize) {
-        Label label = new Label(text);
-        label.setStyle("-fx-font-size: " + fontSize + "px; -fx-alignment: center;");
-        return label;
     }
 
     @FXML
     private void runSearch(ActionEvent event) {
         // Get the grid from mainPane's center
-        GridPane grid = getGridFromMainPane();
+        GridPane grid = Util.getGridFromMainPane(mainPane);
 
         if (grid == null) {
             JOptionPane.showMessageDialog(null,
@@ -278,7 +282,7 @@ public class GridController {
         final GridPane finalGrid = grid;
 
         // Reset all tile colors (except obstacles, water, and special points)
-        resetGridColors(grid);
+        Util.resetGridColors(grid, currentStartingPoint, currentEndingPoint);
 
         // Create a new thread for the search to allow for animation
         new Thread(() -> {
@@ -290,7 +294,10 @@ public class GridController {
                 if (finalPath != null && !finalPath.isEmpty()) {
                     // Animate the final path one tile at a time
                     animateFinalPath(finalGrid, finalPath, 0);
-                } else {
+
+                } //Make sure it won't run when we stop search (since we also return null)
+                else if (!stopSearch) {
+
                     JOptionPane.showMessageDialog(null,
                             "No safe path found from start to end!",
                             "No Path Found",
@@ -300,15 +307,11 @@ public class GridController {
         }).start();
     }
 
-    // Helper method to get the grid from mainPane
-    private GridPane getGridFromMainPane() {
-        if (mainPane != null && mainPane.getCenter() instanceof GridPane) {
-            return (GridPane) mainPane.getCenter();
-        }
-        return null;
-    }
-
     private List<AStarNode> aStarSearch(GridPane grid, int startX, int startY, int endX, int endY, List<AStarNode> testedPath) {
+
+        //flag a new search operation
+        stopSearch = false;
+
         // Create open and closed lists
         PriorityQueue<AStarNode> openList = new PriorityQueue<>();
         List<AStarNode> closedList = new ArrayList<>();
@@ -322,22 +325,27 @@ public class GridController {
 
         //mark starting node as visited (via filling it)
         Platform.runLater(() -> {
-            Button button = getButtonAt(grid, startNode.x, startNode.y);
+            Button button = Util.getButtonAt(grid, startNode.x, startNode.y);
             if (button != null) {
-                button.setStyle("-fx-background-color: red;");
+                button.setStyle(baseStyle + " -fx-background-color: red;");
             }
         });
 
         while (!openList.isEmpty()) {
+
+            if (stopSearch) {
+                return null;
+            }
+
             // Get the node with the lowest f cost
             AStarNode currentNode = openList.poll();
             testedPath.add(currentNode);
 
             // Update the UI to show the tested node
             Platform.runLater(() -> {
-                Button button = getButtonAt(grid, currentNode.x, currentNode.y);
+                Button button = Util.getButtonAt(grid, currentNode.x, currentNode.y);
                 if (button != null && !button.equals(currentStartingPoint) && !button.equals(currentEndingPoint)) {
-                    button.setStyle("-fx-background-color: lightcoral;");
+                    button.setStyle(baseStyle + " -fx-background-color: lightcoral;");
                 }
             });
 
@@ -351,9 +359,9 @@ public class GridController {
 
             // Check if we've reached the end
             if (currentNode.equals(endNode)) {
-                Button button = getButtonAt(grid, currentNode.x, currentNode.y);
+                Button button = Util.getButtonAt(grid, currentNode.x, currentNode.y);
                 if (button != null) {
-                    button.setStyle("-fx-background-color: orange;");
+                    button.setStyle(baseStyle + " -fx-background-color: orange;");
                 }
                 return reconstructPath(currentNode);
             }
@@ -374,7 +382,7 @@ public class GridController {
                 if (!openList.contains(neighbor) || tentativeGScore < neighbor.g) {
                     neighbor.parent = currentNode;
                     neighbor.g = tentativeGScore;
-                    neighbor.h = manhattanDistance(neighbor, endNode);
+                    neighbor.h = Util.manhattanDistance(neighbor, endNode);
                     neighbor.f = neighbor.g + neighbor.h;
 
                     if (!openList.contains(neighbor)) {
@@ -397,9 +405,9 @@ public class GridController {
         }
 
         AStarNode node = path.get(index);
-        Button button = getButtonAt(grid, node.x, node.y);
+        Button button = Util.getButtonAt(grid, node.x, node.y);
         if (button != null && !button.equals(currentStartingPoint) && !button.equals(currentEndingPoint)) {
-            button.setStyle("-fx-background-color: lime;");
+            button.setStyle(baseStyle + " -fx-background-color: lime;");
         }
 
         // Schedule the next animation step after a delay
@@ -414,39 +422,6 @@ public class GridController {
         },
                 300 // 300ms delay between path segments
         );
-    }
-
-    private void resetGridColors(GridPane grid) {
-        for (Node node : grid.getChildren()) {
-            if (node instanceof Button) {
-                Button button = (Button) node;
-                String terrainType = (String) button.getProperties().get("terrainType");
-
-                // Don't reset special points or obstacles/water
-                if (button.equals(currentStartingPoint) || button.equals(currentEndingPoint)) {
-                    continue;
-                }
-
-                if ("Grass".equals(terrainType)) {
-                    button.setStyle("-fx-background-color: mediumseagreen;");
-                } else if ("Water".equals(terrainType)) {
-                    button.setStyle("-fx-background-color: aqua;");
-                } else if ("Obstacle".equals(terrainType)) {
-                    button.setStyle("-fx-background-color: dimgray;");
-                }
-            }
-        }
-    }
-
-    private Button getButtonAt(GridPane grid, int x, int y) {
-        for (Node node : grid.getChildren()) {
-            Integer colIndex = GridPane.getColumnIndex(node);
-            Integer rowIndex = GridPane.getRowIndex(node);
-            if (colIndex != null && rowIndex != null && colIndex == x && rowIndex == y) {
-                return (Button) node;
-            }
-        }
-        return null;
     }
 
     private List<AStarNode> getNeighbors(GridPane grid, AStarNode node) {
@@ -467,7 +442,7 @@ public class GridController {
     }
 
     private boolean isTileSafe(GridPane grid, int x, int y) {
-        Button button = getButtonAt(grid, x, y);
+        Button button = Util.getButtonAt(grid, x, y);
         if (button == null) {
             return false;
         }
@@ -498,7 +473,7 @@ public class GridController {
                 if ("Obstacle".equals(button.getProperties().get("terrainType"))) {
                     int obstacleX = GridPane.getColumnIndex(button);
                     int obstacleY = GridPane.getRowIndex(button);
-                    int distance = (int) manhattanDistance(new AStarNode(x, y), new AStarNode(obstacleX, obstacleY));
+                    int distance = (int) Util.manhattanDistance(new AStarNode(x, y), new AStarNode(obstacleX, obstacleY));
                     if (distance < minDistance) {
                         minDistance = distance;
                     }
@@ -507,10 +482,6 @@ public class GridController {
         }
 
         return minDistance == Integer.MAX_VALUE ? 10 : minDistance; // Default to 10 if no obstacles
-    }
-
-    private double manhattanDistance(AStarNode a, AStarNode b) {
-        return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
     }
 
     private List<AStarNode> reconstructPath(AStarNode endNode) {
@@ -526,7 +497,7 @@ public class GridController {
     }
 
 // Renamed Node class to AStarNode
-    private static class AStarNode implements Comparable<AStarNode> {
+    public static class AStarNode implements Comparable<AStarNode> {
 
         int x, y;
         double f = 0, g = 0, h = 0;
@@ -586,9 +557,24 @@ public class GridController {
     }
 
     public void setStartingPoint(Button button) {
+        // Check if tile is safe
+        GridPane grid = Util.getGridFromMainPane(mainPane);
+        if (grid != null && button != null) {
+            int x = GridPane.getColumnIndex(button);
+            int y = GridPane.getRowIndex(button);
+            if (!isTileSafe(grid, x, y)) {
+                JOptionPane.showMessageDialog(null,
+                        "Cannot set starting point on an unsafe tile!",
+                        "Invalid Tile",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+        }
+
         // Clear previous starting point if exists
         if (currentStartingPoint != null) {
             currentStartingPoint.getProperties().put("isStartingPoint", false);
+            currentStartingPoint.setText(currentStartingPoint.getProperties().get("elevation").toString());
             currentStartingPoint.setBorder(null);
         }
 
@@ -606,9 +592,25 @@ public class GridController {
     }
 
     public void setEndingPoint(Button button) {
+
+        // Check if tile is safe
+        GridPane grid = Util.getGridFromMainPane(mainPane);
+        if (grid != null && button != null) {
+            int x = GridPane.getColumnIndex(button);
+            int y = GridPane.getRowIndex(button);
+            if (!isTileSafe(grid, x, y)) {
+                JOptionPane.showMessageDialog(null,
+                        "Cannot set ending point on an unsafe tile!",
+                        "Invalid Tile",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+        }
+
         // Clear previous ending point if exists
         if (currentEndingPoint != null) {
             currentEndingPoint.getProperties().put("isEndingPoint", false);
+            currentEndingPoint.setText(currentEndingPoint.getProperties().get("elevation").toString());
             currentEndingPoint.setBorder(null);
         }
 
@@ -626,39 +628,6 @@ public class GridController {
         }
     }
 
-    private void trainPerceptronUsingInputData() {
-        String fileName = "data.txt";
-        List<double[]> inputList = new ArrayList<>();
-        List<Double> labelList = new ArrayList<>();
-
-        try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                String[] tokens = line.trim().split("\\s+");
-                if (tokens.length == 4) {
-                    double[] inputs = new double[3];
-                    for (int i = 0; i < 3; i++) {
-                        inputs[i] = Double.parseDouble(tokens[i]);
-                    }
-                    double label = Double.parseDouble(tokens[3]);
-                    inputList.add(inputs);
-                    labelList.add(label);
-                }
-            }
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(null,
-                    "Error reading training data file: " + e.getMessage(),
-                    "File Error",
-                    JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-        double[][] inputArray = inputList.toArray(new double[0][]);
-        double[] labelArray = labelList.stream().mapToDouble(Double::doubleValue).toArray();
-
-        perceptron = new Perceptron(3);
-        perceptron.train(inputArray, labelArray, 20);
-    }
-
     public void setRowsCount(int rowsCount) {
         this.rowsCount = rowsCount;
     }
@@ -668,6 +637,20 @@ public class GridController {
 
         //run here, since its set after rows
         createGrid();
+    }
+
+    private void stopCurrentSearch() {
+        stopSearch = true;
+        // Reset the flag after a short delay to allow new searches
+        new java.util.Timer().schedule(
+                new java.util.TimerTask() {
+            @Override
+            public void run() {
+                stopSearch = false;
+            }
+        },
+                600
+        );
     }
 
 }

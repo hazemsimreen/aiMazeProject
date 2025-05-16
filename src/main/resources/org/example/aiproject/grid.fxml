@@ -7,7 +7,7 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
 
-<AnchorPane id="AnchorPane" prefHeight="600.0" prefWidth="500.0" styleClass="main-explorer-style" stylesheets="@../../../styles/styles.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.example.aiproject.GridController">
+<AnchorPane id="AnchorPane" prefHeight="700.0" prefWidth="500.0" styleClass="main-explorer-style" stylesheets="@../../../styles/styles.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.example.aiproject.GridController">
    <children>
       <BorderPane fx:id="mainPane" layoutY="50.0" prefHeight="550.0" prefWidth="560.0" />
       <Label layoutX="216.0" layoutY="14.0" styleClass="main-title-style" stylesheets="@../../../styles/styles.css" text="Main Program" />
@@ -35,5 +35,28 @@
             </Button>
          </right>
       </BorderPane>
+      <BorderPane layoutX="4.8" layoutY="660.0" prefHeight="28.0" prefWidth="550.0" AnchorPane.leftAnchor="50.0" AnchorPane.rightAnchor="50.0">
+         <left>
+            <BorderPane prefHeight="38.0" prefWidth="142.0" BorderPane.alignment="CENTER">
+               <left>
+                  <Button mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" style="-fx-background-color: lightcoral;" BorderPane.alignment="CENTER" />
+               </left>
+               <center>
+                  <Label prefHeight="23.0" prefWidth="109.0" styleClass="main-text-style" stylesheets="@../../../styles/styles.css" text="Starting Path" BorderPane.alignment="CENTER" />
+               </center>
+            </BorderPane>
+         </left>
+         <right>
+            <BorderPane prefHeight="28.0" prefWidth="126.0" BorderPane.alignment="CENTER">
+               <left>
+                  <Button mnemonicParsing="false" prefHeight="25.0" prefWidth="25.0" style="-fx-background-color: lime;" BorderPane.alignment="CENTER" />
+               </left>
+               <center>
+                  <Label prefHeight="23.0" prefWidth="94.0" styleClass="main-text-style" stylesheets="@../../../styles/styles.css" text="Result Path" BorderPane.alignment="CENTER" />
+               </center>
+            </BorderPane>
+         </right>
+      </BorderPane>
+      <Label fx:id="accuracyLabel" layoutX="142.0" layoutY="700.0" maxWidth="498.0" minWidth="356.0" prefHeight="18.0" prefWidth="388.0" style="-fx-text-alignment: center;" styleClass="side-note-style" stylesheets="@../../../styles/styles.css" textAlignment="CENTER" />
    </children>
 </AnchorPane>
