@@ -37,7 +37,7 @@ public class GridController {
     private int columnsCount;
 
     String baseStyle;
-    
+
     @FXML
     Label accuracyLabel;
 
@@ -116,7 +116,6 @@ public class GridController {
 
     @FXML
     private void randomizeTiles(ActionEvent event) {
-
         //if a search is running, stop it
         stopCurrentSearch();
 
@@ -143,8 +142,8 @@ public class GridController {
             currentEndingPoint = null;
         }
 
-        // First collect all grass tiles with elevation > 0
-        List<Button> eligibleGrassTiles = new ArrayList<>();
+        // First collect all safe grass tiles with elevation > 0
+        List<Button> eligibleSafeTiles = new ArrayList<>();
 
         // Get all buttons from the grid and randomize their properties
         for (Node node : grid.getChildren()) {
@@ -171,10 +170,6 @@ public class GridController {
                 switch (randomTerrain) {
                     case "Grass":
                         button.setStyle(baseStyle + " -fx-background-color: mediumseagreen;");
-                        // Only add to eligible list if elevation > 0
-                        if (randomElevation > 0) {
-                            eligibleGrassTiles.add(button);
-                        }
                         break;
                     case "Water":
                         button.setStyle(baseStyle + " -fx-background-color: aqua;");
@@ -189,34 +184,70 @@ public class GridController {
                 button.getProperties().put("elevation", randomElevation);
 
                 button.setText(String.valueOf(randomElevation));
+
+                // Check if tile is safe and grass with elevation > 0
+                int x = GridPane.getColumnIndex(button);
+                int y = GridPane.getRowIndex(button);
+                if ("Grass".equals(randomTerrain) && randomElevation > 0 && isTileSafe(grid, x, y)) {
+                    eligibleSafeTiles.add(button);
+                }
             }
         }
 
-        // Set random starting and ending points (must be on grass with elevation > 0 and different tiles)
-        if (eligibleGrassTiles.size() >= 2) {
-            // Random starting point
-            int startIndex = (int) (Math.random() * eligibleGrassTiles.size());
-            Button startButton = eligibleGrassTiles.get(startIndex);
-            setStartingPoint(startButton);
+        // Set random starting and ending points (must be on safe grass with elevation > 0 and different tiles)
+        if (eligibleSafeTiles.size() >= 2) {
+            // Keep trying to find valid points until we get safe ones
+            boolean validPointsSet = false;
+            int attempts = 0;
+            final int MAX_ATTEMPTS = 10; // Prevent infinite loops
 
-            // Remove starting point from available grass tiles
-            eligibleGrassTiles.remove(startIndex);
+            while (!validPointsSet && attempts < MAX_ATTEMPTS) {
+                attempts++;
 
-            // Random ending point (from remaining grass tiles)
-            int endIndex = (int) (Math.random() * eligibleGrassTiles.size());
-            Button endButton = eligibleGrassTiles.get(endIndex);
-            setEndingPoint(endButton);
-        } else if (eligibleGrassTiles.size() == 1) {
-            // Only one eligible grass tile - set it as starting point
-            setStartingPoint(eligibleGrassTiles.get(0));
-            JOptionPane.showMessageDialog(null,
-                    "Could only set starting point. Add more grass tiles with elevation > 0 to set an ending point.",
-                    "Only one eligible grass tile available",
-                    JOptionPane.WARNING_MESSAGE);
+                // Random starting point
+                int startIndex = (int) (Math.random() * eligibleSafeTiles.size());
+                Button startButton = eligibleSafeTiles.get(startIndex);
+
+                // Remove starting point from available tiles
+                List<Button> remainingTiles = new ArrayList<>(eligibleSafeTiles);
+                remainingTiles.remove(startIndex);
+
+                if (!remainingTiles.isEmpty()) {
+                    // Random ending point (from remaining tiles)
+                    int endIndex = (int) (Math.random() * remainingTiles.size());
+                    Button endButton = remainingTiles.get(endIndex);
+
+                    // Verify both points are safe (should be true since we pre-filtered)
+                    if (isTileSafe(grid, GridPane.getColumnIndex(startButton), GridPane.getRowIndex(startButton))
+                            && isTileSafe(grid, GridPane.getColumnIndex(endButton), GridPane.getRowIndex(endButton))) {
+
+                        setStartingPoint(startButton);
+                        setEndingPoint(endButton);
+                        validPointsSet = true;
+                    }
+                }
+            }
+
+            if (!validPointsSet) {
+                JOptionPane.showMessageDialog(null,
+                        "Failed to find safe starting and ending points after multiple attempts.",
+                        "No Safe Points Found",
+                        JOptionPane.WARNING_MESSAGE);
+            }
+        } else if (eligibleSafeTiles.size() == 1) {
+            // Only one eligible safe tile - set it as starting point if safe
+            Button startButton = eligibleSafeTiles.get(0);
+            if (isTileSafe(grid, GridPane.getColumnIndex(startButton), GridPane.getRowIndex(startButton))) {
+                setStartingPoint(startButton);
+                JOptionPane.showMessageDialog(null,
+                        "Could only set starting point. Add more safe grass tiles with elevation > 0 to set an ending point.",
+                        "Only one eligible safe tile available",
+                        JOptionPane.WARNING_MESSAGE);
+            }
         } else {
             JOptionPane.showMessageDialog(null,
-                    "Could not set starting or ending points. Add some grass tiles with elevation > 0 first.",
-                    "No eligible grass tiles available",
+                    "Could not set starting or ending points. Add some safe grass tiles with elevation > 0 first.",
+                    "No eligible safe tiles available",
                     JOptionPane.WARNING_MESSAGE);
         }
     }
@@ -526,6 +557,20 @@ public class GridController {
     }
 
     public void setStartingPoint(Button button) {
+        // Check if tile is safe
+        GridPane grid = Util.getGridFromMainPane(mainPane);
+        if (grid != null && button != null) {
+            int x = GridPane.getColumnIndex(button);
+            int y = GridPane.getRowIndex(button);
+            if (!isTileSafe(grid, x, y)) {
+                JOptionPane.showMessageDialog(null,
+                        "Cannot set starting point on an unsafe tile!",
+                        "Invalid Tile",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+        }
+
         // Clear previous starting point if exists
         if (currentStartingPoint != null) {
             currentStartingPoint.getProperties().put("isStartingPoint", false);
@@ -547,6 +592,21 @@ public class GridController {
     }
 
     public void setEndingPoint(Button button) {
+
+        // Check if tile is safe
+        GridPane grid = Util.getGridFromMainPane(mainPane);
+        if (grid != null && button != null) {
+            int x = GridPane.getColumnIndex(button);
+            int y = GridPane.getRowIndex(button);
+            if (!isTileSafe(grid, x, y)) {
+                JOptionPane.showMessageDialog(null,
+                        "Cannot set ending point on an unsafe tile!",
+                        "Invalid Tile",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+        }
+
         // Clear previous ending point if exists
         if (currentEndingPoint != null) {
             currentEndingPoint.getProperties().put("isEndingPoint", false);

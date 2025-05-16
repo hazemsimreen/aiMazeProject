@@ -7,12 +7,6 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.TextField;
-import javafx.scene.paint.Color;
-import javafx.scene.layout.Border;
-import javafx.scene.layout.BorderStroke;
-import javafx.scene.layout.BorderStrokeStyle;
-import javafx.scene.layout.BorderWidths;
-import javafx.scene.layout.CornerRadii;
 import javax.swing.JOptionPane;
 
 public class ComboBoxController {
@@ -80,26 +74,12 @@ public class ComboBoxController {
                                 JOptionPane.ERROR_MESSAGE);
                         return;
                     }
-                    if (value == 0) {
-                        JOptionPane.showMessageDialog(null,
-                                "Starting point can't have an elevation of zero",
-                                "Invalid Elevation",
-                                JOptionPane.ERROR_MESSAGE);
-                        return;
-                    }
                     mainController.setStartingPoint(targetButton);
                 } else if (endingPointRadioButton.isSelected()) {
                     if (selectedItem != null && !selectedItem.equals("Grass")) {
                         JOptionPane.showMessageDialog(null,
                                 "Ending point can only be set on Grass terrain!",
                                 "Invalid Terrain",
-                                JOptionPane.ERROR_MESSAGE);
-                        return;
-                    }
-                    if (value == 0) {
-                        JOptionPane.showMessageDialog(null,
-                                "Ending point can't have an elevation of zero",
-                                "Invalid Elevation",
                                 JOptionPane.ERROR_MESSAGE);
                         return;
                     }
