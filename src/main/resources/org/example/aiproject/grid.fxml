@@ -57,5 +57,6 @@
             </BorderPane>
          </right>
       </BorderPane>
+      <Label fx:id="accuracyLabel" layoutX="142.0" layoutY="700.0" maxWidth="498.0" minWidth="356.0" prefHeight="18.0" prefWidth="388.0" style="-fx-text-alignment: center;" styleClass="side-note-style" stylesheets="@../../../styles/styles.css" textAlignment="CENTER" />
    </children>
 </AnchorPane>

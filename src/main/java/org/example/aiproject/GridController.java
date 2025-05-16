@@ -37,10 +37,15 @@ public class GridController {
     private int columnsCount;
 
     String baseStyle;
+    
+    @FXML
+    Label accuracyLabel;
 
     @FXML
     public void initialize() {
-        perceptron = Util.trainPerceptronUsingInputData();
+        perceptron = (Perceptron) Util.trainPerceptronUsingInputData().get("perceptron");
+        Double accuracy = (Double) Util.trainPerceptronUsingInputData().get("accuracy");
+        accuracyLabel.setText("The accuracy of our training was " + String.valueOf(accuracy) + "%");
     }
 
     @FXML
