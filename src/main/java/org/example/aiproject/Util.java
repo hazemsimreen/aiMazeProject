@@ -115,8 +115,8 @@ public class Util {
         double[][] inputArray = inputList.toArray(new double[0][]);
         double[] labelArray = labelList.stream().mapToDouble(Double::doubleValue).toArray();
 
-        Perceptron perceptron = new Perceptron(3);
-        perceptron.train(inputArray, labelArray, 20);
+        Perceptron perceptron = new Perceptron(3, 0.05);
+        perceptron.train(inputArray, labelArray, 250);
         return perceptron;
     }
 
